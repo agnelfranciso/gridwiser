@@ -126,6 +126,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   const [exportingAllDays, setExportingAllDays] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [mobileNoticeOpen, setMobileNoticeOpen] = useState(false);
+  const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const dailyExportRefs = useRef<Partial<Record<DayOfWeek, HTMLDivElement | null>>>({});
   const hasDraftSubjectsRef = useRef<boolean>(subjects.length > 0);
@@ -974,7 +975,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                     </button>
                     <button
                       type="button"
-                      onClick={handleSignOut}
+                      onClick={() => setSignOutConfirmOpen(true)}
                       className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#25252D] bg-[#0B0B0D] py-1.5 text-[11px] font-medium text-zinc-300 transition hover:border-zinc-500 hover:text-white"
                     >
                       <LogOut className="h-3 w-3" />
@@ -1054,7 +1055,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                         </button>
                         <button
                           type="button"
-                          onClick={handleSignOut}
+                          onClick={() => setSignOutConfirmOpen(true)}
                           className="rounded-lg border border-[#25252D] bg-[#131317] p-1.5 text-zinc-300"
                           title="Sign Out"
                         >
@@ -1810,6 +1811,44 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
           ))}
         </div>
       )}
+
+      {/* Sign Out Confirmation Modal */}
+      <AnimatedModalShell
+        open={signOutConfirmOpen}
+        onClose={() => setSignOutConfirmOpen(false)}
+        zIndexClass="z-50"
+      >
+        <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 bg-[#080B12] p-6 shadow-2xl">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] text-zinc-200">
+            <LogOut className="h-5 w-5" />
+          </div>
+          <h3 className="mt-4 text-base font-semibold text-white">
+            Sign out of GridWiser?
+          </h3>
+          <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+            Any unsaved changes to your current draft will be cleared from this session. Saved schedules remain safely stored in your account.
+          </p>
+          <div className="mt-5 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setSignOutConfirmOpen(false)}
+              className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-zinc-300 transition hover:bg-white/[0.08] hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSignOutConfirmOpen(false);
+                void handleSignOut();
+              }}
+              className="rounded-xl bg-white px-4 py-2 text-xs font-semibold text-[#050811] transition hover:bg-zinc-200"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </AnimatedModalShell>
 
       {/* Mobile Desktop-Recommended Notice (shown when logged in on mobile) */}
       <AnimatedModalShell

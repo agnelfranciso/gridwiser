@@ -30,7 +30,11 @@ import {
   listUserTimetables,
 } from '@/lib/firestore-timetables';
 import { GridWiseBrand, GridWiseLogoMark } from '@/components/GridWiseLogo';
-import { EASE_SMOOTH, TRANSITION_FAST } from '@/components/MotionPrimitives';
+import {
+  AnimatedModalShell,
+  EASE_SMOOTH,
+  TRANSITION_FAST,
+} from '@/components/MotionPrimitives';
 
 export function AccountSettingsPage() {
   const router = useRouter();
@@ -43,6 +47,7 @@ export function AccountSettingsPage() {
   >(null);
   const [confirmDeleteContent, setConfirmDeleteContent] = useState(false);
   const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
+  const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const [statusMsg, setStatusMsg] = useState<{
@@ -213,7 +218,7 @@ export function AccountSettingsPage() {
             </Link>
             <button
               type="button"
-              onClick={handleSignOut}
+              onClick={() => setSignOutConfirmOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-white/[0.08] hover:text-white"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -442,6 +447,43 @@ export function AccountSettingsPage() {
           </p>
         </motion.div>
       </main>
+
+      <AnimatedModalShell
+        open={signOutConfirmOpen}
+        onClose={() => setSignOutConfirmOpen(false)}
+        zIndexClass="z-50"
+      >
+        <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 bg-[#080B12] p-6 shadow-2xl">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] text-zinc-200">
+            <LogOut className="h-5 w-5" />
+          </div>
+          <h3 className="mt-4 text-base font-semibold text-white">
+            Sign out of GridWiser?
+          </h3>
+          <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+            You&apos;ll be returned to the home page. All saved schedules remain safely stored in your account.
+          </p>
+          <div className="mt-5 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setSignOutConfirmOpen(false)}
+              className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-zinc-300 transition hover:bg-white/[0.08] hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSignOutConfirmOpen(false);
+                void handleSignOut();
+              }}
+              className="rounded-xl bg-white px-4 py-2 text-xs font-semibold text-[#050811] transition hover:bg-zinc-200"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </AnimatedModalShell>
     </div>
   );
 }
