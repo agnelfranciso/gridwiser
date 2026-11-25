@@ -1629,7 +1629,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                             </button>
 
                             {exportMenuOpen && (
-                              <div className="absolute right-0 z-40 mt-2 w-60 rounded-xl border border-[#27272F] bg-[#0D0E12] p-1.5 shadow-2xl">
+                              <div className="absolute right-0 z-40 mt-2 w-60 max-w-[calc(100vw-1rem)] rounded-xl border border-[#27272F] bg-[#0D0E12] p-1.5 shadow-2xl">
                                 <button
                                   type="button"
                                   onClick={() => {

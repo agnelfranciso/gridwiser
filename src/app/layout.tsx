@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/next';
 import { MotionProvider } from '@/components/MotionPrimitives';
 import {
   Inter,
@@ -124,6 +125,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     >
       <body className="min-h-full bg-[#09090B] text-zinc-100 font-sans selection:bg-white/15 selection:text-white">
         <MotionProvider>{children}</MotionProvider>
+        <Analytics />
       </body>
     </html>
   );
