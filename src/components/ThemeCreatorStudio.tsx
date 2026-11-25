@@ -322,14 +322,18 @@ export function ThemeCreatorStudio() {
       const templateId = await saveUserCustomTemplate(
         user.uid,
         template,
-        template.id.startsWith('custom-') ? template.id : null
+        template.id && !template.id.startsWith('custom-draft') && template.id.startsWith('custom-')
+          ? template.id
+          : null
       );
       setTemplate((prev) => ({ ...prev, id: templateId }));
       const updated = await listUserCustomTemplates(user.uid);
       setSavedTemplates(updated);
       showToast('Theme saved to your account!');
-    } catch {
-      showToast('Failed to save theme. Please try again.', 'err');
+    } catch (err) {
+      console.error('Save custom template error:', err);
+      const msg = err instanceof Error ? err.message : 'Failed to save theme. Please try again.';
+      showToast(msg, 'err');
     } finally {
       setIsSaving(false);
     }
