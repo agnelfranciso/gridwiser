@@ -21,6 +21,7 @@ import {
 import { auth } from '@/lib/firebase';
 import {
   deleteUserCustomTemplate,
+  getUserCustomTemplate,
   listUserCustomTemplates,
   publishSharedCustomTemplate,
   saveUserCustomTemplate,
@@ -288,6 +289,21 @@ export function ThemeCreatorStudio() {
         try {
           const list = await listUserCustomTemplates(currUser.uid);
           setSavedTemplates(list);
+
+          const editId =
+            typeof window !== 'undefined'
+              ? new URLSearchParams(window.location.search).get('edit')
+              : null;
+          if (editId) {
+            const match =
+              list.find((t) => t.id === editId) ??
+              (await getUserCustomTemplate(currUser.uid, editId));
+            if (match) {
+              setTemplate(match);
+              setShareId(match.shareId ?? null);
+              showToast(`Loaded "${match.name}" for editing`);
+            }
+          }
         } catch {
           // ignore
         }
@@ -321,17 +337,36 @@ export function ThemeCreatorStudio() {
     }
     setIsSaving(true);
     try {
-      const templateId = await saveUserCustomTemplate(
-        user.uid,
-        template,
+      const existingId =
         template.id && !template.id.startsWith('custom-draft') && template.id.startsWith('custom-')
           ? template.id
-          : null
+          : null;
+      const activeShareId = shareId ?? template.shareId ?? null;
+      const templateId = await saveUserCustomTemplate(
+        user.uid,
+        { ...template, shareId: activeShareId },
+        existingId
       );
-      setTemplate((prev) => ({ ...prev, id: templateId }));
+      const savedDraft: CustomTemplateDefinition = {
+        ...template,
+        id: templateId,
+        shareId: activeShareId,
+      };
+      if (activeShareId) {
+        await publishSharedCustomTemplate(
+          user.uid,
+          savedDraft,
+          user.displayName ?? 'Creator',
+          activeShareId
+        );
+      }
+      setTemplate(savedDraft);
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', `/theme-creator?edit=${encodeURIComponent(templateId)}`);
+      }
       const updated = await listUserCustomTemplates(user.uid);
       setSavedTemplates(updated);
-      showToast('Theme saved to your account!');
+      showToast(activeShareId ? 'Theme saved & public share link synced!' : 'Theme saved to your account!');
     } catch (err) {
       console.error('Save custom template error:', err);
       const msg = err instanceof Error ? err.message : 'Failed to save theme. Please try again.';
@@ -348,17 +383,40 @@ export function ThemeCreatorStudio() {
     }
     setIsSaving(true);
     try {
+      const existingId =
+        template.id && !template.id.startsWith('custom-draft') && template.id.startsWith('custom-')
+          ? template.id
+          : null;
+      const activeShareId = shareId ?? template.shareId ?? null;
+      const ensuredId = await saveUserCustomTemplate(
+        user.uid,
+        { ...template, shareId: activeShareId },
+        existingId
+      );
+      const savedDraft: CustomTemplateDefinition = {
+        ...template,
+        id: ensuredId,
+        shareId: activeShareId,
+      };
       const pubShareId = await publishSharedCustomTemplate(
         user.uid,
-        template,
+        savedDraft,
         user.displayName ?? 'Creator',
-        shareId
+        activeShareId
       );
+      setTemplate({ ...savedDraft, shareId: pubShareId });
       setShareId(pubShareId);
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', `/theme-creator?edit=${encodeURIComponent(ensuredId)}`);
+      }
+      const updated = await listUserCustomTemplates(user.uid);
+      setSavedTemplates(updated);
       setShareModalOpen(true);
-      showToast('Public theme link generated!');
-    } catch {
-      showToast('Could not share theme.', 'err');
+      showToast('Public theme link synced & ready!');
+    } catch (err) {
+      console.error('Share custom template error:', err);
+      const msg = err instanceof Error ? err.message : 'Could not share theme.';
+      showToast(msg, 'err');
     } finally {
       setIsSaving(false);
     }
@@ -376,52 +434,6 @@ export function ThemeCreatorStudio() {
   };
 
   const activePresetPreview = useMemo(() => toPresetTemplate(template), [template]);
-
-  const [isMobileBlocked, setIsMobileBlocked] = useState(false);
-
-  useEffect(() => {
-    const checkViewportAndDevice = () => {
-      const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-      const isMobileUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-      const isSmallViewport = typeof window !== 'undefined' && window.innerWidth < 1024;
-      setIsMobileBlocked(isMobileUa || isSmallViewport);
-    };
-    checkViewportAndDevice();
-    window.addEventListener('resize', checkViewportAndDevice);
-    return () => window.removeEventListener('resize', checkViewportAndDevice);
-  }, []);
-
-  if (isMobileBlocked) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#08080A] px-6 py-12 text-center text-zinc-100">
-        <div className="max-w-md rounded-2xl border border-[#24242F] bg-[#0F0F14] p-7 shadow-2xl">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-blue-400">
-            <Monitor className="h-6 w-6" />
-          </div>
-          <span className="mt-4 inline-block rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-300">
-            Desktop Exclusive
-          </span>
-          <h1 className="mt-3 text-xl font-bold tracking-tight text-white">
-            Theme Creator Requires a Desktop Browser
-          </h1>
-          <p className="mt-2.5 text-xs leading-relaxed text-zinc-400">
-            GridWiser Theme Creator is exclusively available on desktop &amp; laptop screens (1024px+).
-            You can still apply and use any saved or shared custom themes in the main Studio on mobile
-            &mdash; only creating or editing themes requires a desktop browser.
-          </p>
-          <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:justify-center">
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#09090B] transition hover:bg-zinc-200"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back to Main Studio
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const [isMobileBlocked, setIsMobileBlocked] = useState(false);
 
@@ -1060,6 +1072,10 @@ export function ThemeCreatorStudio() {
                             className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5"
                             onClick={() => {
                               setTemplate(t);
+                              setShareId(t.shareId ?? null);
+                              if (typeof window !== 'undefined') {
+                                window.history.replaceState({}, '', `/theme-creator?edit=${encodeURIComponent(t.id)}`);
+                              }
                               showToast(`Loaded "${t.name}"`);
                             }}
                           >

@@ -35,12 +35,13 @@ import {
   ChevronDown,
   User as UserIcon,
   Loader2,
+  Pencil,
 } from 'lucide-react';
 import {
   ALL_DAYS,
   toPresetTemplate,
+  type CustomTemplateDefinition,
   type DayOfWeek,
-  type PresetTemplate,
   type PresetTemplateId,
   type SavedTimetableRecord,
   type SavedTimetableSummary,
@@ -54,6 +55,7 @@ import {
   getUserTimetable,
   listUserCustomTemplates,
   listUserTimetables,
+  publishSharedCustomTemplate,
   publishSharedTimetable,
   saveUserTimetable,
   unpublishSharedTimetable,
@@ -130,7 +132,14 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [savedList, setSavedList] = useState<SavedTimetableSummary[]>([]);
   const [loadingSaved, setLoadingSaved] = useState(false);
-  const [customTemplates, setCustomTemplates] = useState<PresetTemplate[]>([]);
+  const [customTemplateDefs, setCustomTemplateDefs] = useState<CustomTemplateDefinition[]>([]);
+  const [sharingTemplateId, setSharingTemplateId] = useState<string | null>(null);
+  const [sharedTemplateModalUrl, setSharedTemplateModalUrl] = useState<string | null>(null);
+  const [copiedTemplateShareUrl, setCopiedTemplateShareUrl] = useState(false);
+  const customTemplates = useMemo(
+    () => customTemplateDefs.map(toPresetTemplate),
+    [customTemplateDefs]
+  );
   const [aiImportOpen, setAiImportOpen] = useState(false);
   const [overlapAlertOpen, setOverlapAlertOpen] = useState(false);
 
@@ -330,11 +339,42 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   const fetchCustomTemplates = useCallback(async (uid: string) => {
     try {
       const items = await listUserCustomTemplates(uid);
-      setCustomTemplates(items.map(toPresetTemplate));
+      setCustomTemplateDefs(items);
     } catch {
       // Ignore if offline or rules not yet propagated
     }
   }, []);
+
+  const handleShareCustomTemplate = useCallback(
+    async (def: CustomTemplateDefinition) => {
+      if (!user) {
+        showToast('Please sign in to share your custom theme.', 'err');
+        return;
+      }
+      setSharingTemplateId(def.id);
+      try {
+        const pubShareId = await publishSharedCustomTemplate(
+          user.uid,
+          def,
+          user.displayName ?? def.authorName ?? 'Creator',
+          def.shareId ?? null
+        );
+        setCustomTemplateDefs((prev) =>
+          prev.map((item) => (item.id === def.id ? { ...item, shareId: pubShareId } : item))
+        );
+        const shareUrl = `${window.location.origin}/template/${pubShareId}`;
+        setSharedTemplateModalUrl(shareUrl);
+        setCopiedTemplateShareUrl(false);
+        showToast('Custom theme link synced & ready to share!');
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Could not share custom theme.';
+        showToast(msg, 'err');
+      } finally {
+        setSharingTemplateId(null);
+      }
+    },
+    [showToast, user]
+  );
 
   // Observe Firebase Auth state:
   // - Logged out -> Welcome / Get Started UI
@@ -407,7 +447,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
         }
       } else if (!initialRecord) {
         setSavedList([]);
-        setCustomTemplates([]);
+        setCustomTemplateDefs([]);
         setSavedId(null);
         setShareId(null);
         const params = new URLSearchParams(window.location.search);
@@ -1463,11 +1503,10 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                         void handleShareTimetable();
                       }
                     }}
-                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
-                      shareId
+                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${shareId
                         ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400/50'
                         : 'border-[#25252D] bg-[#131317] text-zinc-200 hover:border-zinc-500'
-                    }`}
+                      }`}
                   >
                     {shareId ? (
                       <>
@@ -1603,12 +1642,22 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                           {allTemplates.map((tpl) => {
                             const active = tpl.id === templateId;
                             const isCustom = tpl.id.startsWith('custom-');
+                            const customDef = isCustom
+                              ? customTemplateDefs.find((d) => d.id === tpl.id)
+                              : undefined;
                             return (
-                              <button
+                              <div
                                 key={tpl.id}
-                                type="button"
+                                role="button"
+                                tabIndex={0}
                                 onClick={() => setTemplateId(tpl.id)}
-                                className={`flex w-[220px] shrink-0 snap-start items-start gap-3 rounded-xl border p-3 text-left transition xl:w-auto xl:gap-3.5 xl:p-3.5 ${active
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setTemplateId(tpl.id);
+                                  }
+                                }}
+                                className={`flex w-[240px] shrink-0 cursor-pointer snap-start items-start gap-3 rounded-xl border p-3 text-left transition xl:w-auto xl:gap-3.5 xl:p-3.5 ${active
                                   ? 'border-white bg-[#17171C]'
                                   : 'border-[#202026] bg-[#121215] hover:border-[#32323D]'
                                   }`}
@@ -1654,8 +1703,39 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                                   <p className="mt-1 line-clamp-2 text-[11px] text-zinc-400">
                                     {tpl.description}
                                   </p>
+                                  {customDef && (
+                                    <div
+                                      className="mt-2.5 flex items-center gap-1.5"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Link
+                                        href={`/theme-creator?edit=${encodeURIComponent(customDef.id)}`}
+                                        className="hidden items-center gap-1 rounded-md border border-[#2C2C38] bg-[#1A1A22] px-2 py-1 text-[10px] font-medium text-zinc-200 transition hover:border-zinc-500 hover:text-white lg:inline-flex"
+                                      >
+                                        <Pencil className="h-2.5 w-2.5" />
+                                        Edit
+                                      </Link>
+                                      <button
+                                        type="button"
+                                        disabled={sharingTemplateId === customDef.id}
+                                        onClick={() => void handleShareCustomTemplate(customDef)}
+                                        className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-medium transition ${
+                                          customDef.shareId
+                                            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                                            : 'border-[#2C2C38] bg-[#1A1A22] text-zinc-200 hover:border-zinc-500 hover:text-white'
+                                        } disabled:opacity-60`}
+                                      >
+                                        {sharingTemplateId === customDef.id ? (
+                                          <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                        ) : (
+                                          <Share2 className="h-2.5 w-2.5" />
+                                        )}
+                                        {customDef.shareId ? 'Shared Link' : 'Share'}
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
-                              </button>
+                              </div>
                             );
                           })}
                         </div>
@@ -1752,9 +1832,8 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                             >
                               Export
                               <ChevronDown
-                                className={`h-3.5 w-3.5 transition-transform ${
-                                  exportMenuOpen ? 'rotate-180' : ''
-                                }`}
+                                className={`h-3.5 w-3.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''
+                                  }`}
                               />
                             </button>
 
@@ -2099,9 +2178,8 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                     key={id}
                     type="button"
                     onClick={() => handleNavClick(id)}
-                    className={`relative flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium transition-colors ${
-                      active ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
-                    }`}
+                    className={`relative flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium transition-colors ${active ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
                   >
                     {active && (
                       <motion.span
@@ -2310,6 +2388,90 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
         onError={(err) => showToast(formatFirebaseAuthError(err).message, 'err')}
       />
 
+      {/* Custom Theme Share Modal */}
+      <AnimatedModalShell
+        open={Boolean(sharedTemplateModalUrl)}
+        onClose={() => setSharedTemplateModalUrl(null)}
+        zIndexClass="z-50"
+      >
+        <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/15 bg-[#080B12] p-6 shadow-2xl">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-500/25 bg-blue-500/10 text-blue-300">
+                <Share2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">
+                  Share Custom Theme
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Anyone with this link can preview and add this theme to their account.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSharedTemplateModalUrl(null)}
+              className="rounded-lg p-1 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-200"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="mt-5 flex items-center gap-2 rounded-xl border border-[#24242F] bg-[#0E0E14] px-3 py-2">
+            <input
+              type="text"
+              readOnly
+              value={sharedTemplateModalUrl ?? ''}
+              className="w-full bg-transparent font-mono text-[11px] text-zinc-200 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (!sharedTemplateModalUrl) return;
+                navigator.clipboard.writeText(sharedTemplateModalUrl);
+                setCopiedTemplateShareUrl(true);
+                setTimeout(() => setCopiedTemplateShareUrl(false), 2000);
+              }}
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#09090B] transition hover:bg-zinc-200"
+            >
+              {copiedTemplateShareUrl ? (
+                <>
+                  <Check className="h-3 w-3 text-emerald-600" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3 w-3" />
+                  Copy
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="mt-4 flex justify-end gap-2">
+            {sharedTemplateModalUrl && (
+              <a
+                href={sharedTemplateModalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#262632] bg-[#14141C] px-3.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-zinc-500"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Open Link
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={() => setSharedTemplateModalUrl(null)}
+              className="rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-500"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </AnimatedModalShell>
+
       {/* Share Settings Modal */}
       <AnimatedModalShell
         open={shareModalOpen && Boolean(shareId)}
@@ -2349,8 +2511,8 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                 typeof window !== 'undefined' && shareId
                   ? `${window.location.origin}/share/${shareId}`
                   : shareId
-                  ? `/share/${shareId}`
-                  : ''
+                    ? `/share/${shareId}`
+                    : ''
               }
               className="min-w-0 flex-1 bg-transparent px-2 font-mono text-xs text-zinc-200 outline-none"
             />
@@ -2359,7 +2521,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
               onClick={async () => {
                 if (!shareId || typeof window === 'undefined') return;
                 const url = `${window.location.origin}/share/${shareId}`;
-                await navigator.clipboard?.writeText(url).catch(() => {});
+                await navigator.clipboard?.writeText(url).catch(() => { });
                 showToast('Shareable link copied!');
               }}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#050811] transition hover:bg-zinc-200"
