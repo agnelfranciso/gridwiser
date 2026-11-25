@@ -296,17 +296,16 @@ export async function getSharedTimetable(
 // Custom Templates Management
 // ===============================================================
 
-export async function saveUserCustomTemplate(
+function sanitizeCustomTemplateCore(
   uid: string,
   template: Omit<CustomTemplateDefinition, 'id' | 'createdAt' | 'updatedAt' | 'ownerUid'>,
-  existingId?: string | null
-): Promise<string> {
-  const templateId = existingId && existingId.length >= 6 ? existingId : `custom-${generateRandomId(6)}`;
-  const ref = doc(db, 'users', uid, 'custom_templates', templateId);
-
-  const cleanPayload = {
+  authorFallback: string,
+  categoryFallback: string
+) {
+  return {
+    ownerUid: uid,
     name: (template.name || 'My Custom Theme').slice(0, 80),
-    category: (template.category || 'Custom').slice(0, 40),
+    category: (template.category || categoryFallback).slice(0, 40),
     description: (template.description || '').slice(0, 240),
     layout: template.layout,
     bgPattern: template.bgPattern,
@@ -328,8 +327,20 @@ export async function saveUserCustomTemplate(
       accentSoft: (template.tokens?.accentSoft || 'rgba(59, 130, 246, 0.16)').slice(0, 64),
       headerBannerBg: template.tokens?.headerBannerBg ? template.tokens.headerBannerBg.slice(0, 256) : '',
     },
-    ownerUid: uid,
-    authorName: (template.authorName || 'GridWise Creator').slice(0, 80),
+    authorName: (authorFallback || template.authorName || 'GridWise Creator').slice(0, 80),
+  };
+}
+
+export async function saveUserCustomTemplate(
+  uid: string,
+  template: Omit<CustomTemplateDefinition, 'id' | 'createdAt' | 'updatedAt' | 'ownerUid'>,
+  existingId?: string | null
+): Promise<string> {
+  const templateId = existingId && existingId.length >= 6 ? existingId : `custom-${generateRandomId(6)}`;
+  const ref = doc(db, 'users', uid, 'custom_templates', templateId);
+
+  const cleanPayload = {
+    ...sanitizeCustomTemplateCore(uid, template, template.authorName || 'GridWise Creator', 'Custom'),
     shareId: template.shareId ?? null,
     updatedAt: serverTimestamp(),
   };
@@ -446,19 +457,12 @@ export async function publishSharedCustomTemplate(
   }
 
   await setDoc(ref, {
-    ownerUid: uid,
-    name: (template.name || 'Custom Theme').slice(0, 80),
-    category: (template.category || 'Community').slice(0, 40),
-    description: (template.description || '').slice(0, 240),
-    layout: template.layout,
-    bgPattern: template.bgPattern,
-    mode: template.mode,
-    displayFont: template.displayFont,
-    bodyFont: template.bodyFont,
-    monoFamily: template.monoFamily,
-    radiusPx: template.radiusPx,
-    tokens: template.tokens,
-    authorName: (authorName || template.authorName || 'Anonymous Creator').slice(0, 80),
+    ...sanitizeCustomTemplateCore(
+      uid,
+      template,
+      authorName || template.authorName || 'Anonymous Creator',
+      'Community'
+    ),
     createdAt: createdAtValue,
     updatedAt: serverTimestamp(),
   });
