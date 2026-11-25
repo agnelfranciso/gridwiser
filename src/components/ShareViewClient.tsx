@@ -270,7 +270,7 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
               </button>
 
               {exportMenuOpen && (
-                <div className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-2.5rem)] rounded-xl border border-[#27272F] bg-[#0D0E12] p-1.5 shadow-2xl">
+                <div className="absolute right-0 z-50 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-[#27272F] bg-[#0D0E12] p-1.5 shadow-2xl">
                   <button
                     type="button"
                     onClick={() => {
