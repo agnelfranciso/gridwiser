@@ -44,6 +44,12 @@ export function WelcomeLanding({
           <GridWiseBrand size="md" tone="dark" />
 
           <div className="flex items-center gap-2.5">
+            <a
+              href="/about"
+              className="hidden rounded-full px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:text-white sm:inline-block"
+            >
+              About
+            </a>
             <button
               type="button"
               onClick={() => onOpenAuth('signin')}
@@ -567,6 +573,10 @@ export function WelcomeLanding({
           <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/[0.06] pt-6 text-[11px] text-zinc-500 sm:flex-row">
             <p>© 2026 GridWiser Studio. Built for students, engineers, and educators.</p>
             <div className="flex items-center gap-6">
+              <a href="/about" className="hover:text-zinc-300">
+                About
+              </a>
+              <span className="text-zinc-700">·</span>
               <a href="/legal" className="hover:text-zinc-300">
                 Terms & Privacy
               </a>
