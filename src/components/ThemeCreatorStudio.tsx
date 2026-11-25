@@ -26,6 +26,7 @@ import {
 } from '@/lib/firestore-timetables';
 import { PRESET_TEMPLATES } from '@/lib/themes';
 import { TimetableRenderer } from '@/components/TimetableRenderer';
+import { ThemeAiModal } from '@/components/ThemeAiModal';
 import {
   AnimatedModalShell,
   SPRING_PILL,
@@ -269,6 +270,7 @@ export function ThemeCreatorStudio() {
   const [isSaving, setIsSaving] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [aiModalOpen, setAiModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [toast, setToast] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
@@ -396,6 +398,14 @@ export function ThemeCreatorStudio() {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => setAiModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>AI Theme Generator</span>
+          </button>
+          <button
+            type="button"
             disabled={isSaving}
             onClick={handleShareTemplate}
             className="inline-flex items-center gap-1.5 rounded-lg border border-[#272732] bg-[#131318] px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-zinc-500"
@@ -446,6 +456,17 @@ export function ThemeCreatorStudio() {
           <div className="max-h-[calc(100vh-7rem)] overflow-y-auto p-4 space-y-5">
             {/* Template Identity */}
             <div className="rounded-xl border border-[#202026] bg-[#121216] p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-white">Theme Identity</span>
+                <button
+                  type="button"
+                  onClick={() => setAiModalOpen(true)}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-400 hover:text-blue-300"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  <span>Generate with AI</span>
+                </button>
+              </div>
               <div>
                 <label className="text-[11px] font-medium text-zinc-400">Theme Name</label>
                 <input
@@ -642,6 +663,27 @@ export function ThemeCreatorStudio() {
                       })
                     }
                   />
+
+                  <h4 className="pt-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                    Header Banner Gradient (Optional)
+                  </h4>
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      value={template.tokens.headerBannerBg || ''}
+                      onChange={(e) =>
+                        setTemplate({
+                          ...template,
+                          tokens: { ...template.tokens, headerBannerBg: e.target.value },
+                        })
+                      }
+                      placeholder="e.g. radial-gradient(85% 120% at 80% 0%, rgba(225, 29, 72, 0.6) 0%, transparent 80%)"
+                      className="w-full rounded-lg border border-[#262630] bg-[#0A0A0D] px-2.5 py-1.5 font-mono text-[11px] text-white placeholder-zinc-600 focus:border-blue-500 focus:outline-none"
+                    />
+                    <p className="text-[10px] text-zinc-500">
+                      CSS linear or radial gradient for top banners (especially prominent on Bento & Crimson Pulse layouts).
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -939,6 +981,23 @@ export function ThemeCreatorStudio() {
           </div>
         </div>
       </AnimatedModalShell>
+
+      {/* AI Theme Generator Modal */}
+      <ThemeAiModal
+        open={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
+        onApplyTheme={(parsedTheme) => {
+          setTemplate((prev) => ({
+            ...prev,
+            ...parsedTheme,
+            tokens: {
+              ...prev.tokens,
+              ...(parsedTheme.tokens || {}),
+            },
+          }));
+          showToast(`Applied AI Theme "${parsedTheme.name || 'Custom'}"!`);
+        }}
+      />
 
       {/* Floating Toast Notification */}
       <AnimatePresence>
