@@ -15,6 +15,7 @@ import type { User } from 'firebase/auth';
 import { db } from '@/lib/firebase';
 import { getPresetTemplate } from '@/lib/themes';
 import type {
+  CustomTemplateDefinition,
   PresetTemplateId,
   SavedTimetableRecord,
   SavedTimetableSummary,
@@ -286,6 +287,218 @@ export async function getSharedTimetable(
     meta: data.meta as TimetableMeta,
     subjects: (data.subjects ?? []) as SubjectEntry[],
     templateId: (data.templateId ?? 'cron-studio') as PresetTemplateId,
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+}
+
+// ===============================================================
+// Custom Templates Management
+// ===============================================================
+
+export async function saveUserCustomTemplate(
+  uid: string,
+  template: Omit<CustomTemplateDefinition, 'id' | 'createdAt' | 'updatedAt' | 'ownerUid'>,
+  existingId?: string | null
+): Promise<string> {
+  const templateId = existingId && existingId.length >= 6 ? existingId : `custom-${generateRandomId(6)}`;
+  const ref = doc(db, 'users', uid, 'custom_templates', templateId);
+
+  const cleanPayload = {
+    name: (template.name || 'My Custom Theme').slice(0, 80),
+    category: (template.category || 'Custom').slice(0, 40),
+    description: (template.description || '').slice(0, 240),
+    layout: template.layout,
+    bgPattern: template.bgPattern,
+    mode: template.mode,
+    displayFont: template.displayFont,
+    bodyFont: template.bodyFont,
+    monoFamily: template.monoFamily,
+    radiusPx: Math.min(Math.max(Number(template.radiusPx) || 0, 0), 32),
+    tokens: {
+      canvasBg: template.tokens.canvasBg || '#09090B',
+      surfaceBg: template.tokens.surfaceBg || '#121215',
+      cardBg: template.tokens.cardBg || '#18181D',
+      cardElevatedBg: template.tokens.cardElevatedBg || '#202026',
+      border: template.tokens.border || '#272730',
+      borderStrong: template.tokens.borderStrong || '#383844',
+      text: template.tokens.text || '#FAFAFA',
+      textMuted: template.tokens.textMuted || '#A1A1AA',
+      accent: template.tokens.accent || '#3B82F6',
+      accentSoft: template.tokens.accentSoft || 'rgba(59, 130, 246, 0.16)',
+      headerBannerBg: template.tokens.headerBannerBg || '',
+    },
+    ownerUid: uid,
+    authorName: (template.authorName || 'GridWise Creator').slice(0, 80),
+    shareId: template.shareId ?? null,
+    updatedAt: serverTimestamp(),
+  };
+
+  let createdAtValue: unknown = serverTimestamp();
+  if (existingId) {
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      createdAtValue = snap.data().createdAt ?? serverTimestamp();
+    }
+  }
+
+  await setDoc(ref, {
+    ...cleanPayload,
+    createdAt: createdAtValue,
+  });
+
+  return templateId;
+}
+
+export async function listUserCustomTemplates(
+  uid: string
+): Promise<CustomTemplateDefinition[]> {
+  const colRef = collection(db, 'users', uid, 'custom_templates');
+  const q = query(colRef, orderBy('updatedAt', 'desc'));
+  const snap = await getDocs(q);
+
+  return snap.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      name: String(data.name || 'Untitled Theme'),
+      category: String(data.category || 'Custom'),
+      description: String(data.description || ''),
+      layout: data.layout || 'cron-sidebar-grid',
+      bgPattern: data.bgPattern || 'solid',
+      mode: data.mode || 'dark',
+      displayFont: data.displayFont || 'inter',
+      bodyFont: data.bodyFont || 'inter',
+      monoFamily: data.monoFamily || 'geist-mono',
+      radiusPx: typeof data.radiusPx === 'number' ? data.radiusPx : 12,
+      tokens: data.tokens || {},
+      ownerUid: data.ownerUid,
+      authorName: data.authorName,
+      shareId: data.shareId ?? null,
+      createdAt: toIsoString(data.createdAt),
+      updatedAt: toIsoString(data.updatedAt),
+    };
+  });
+}
+
+export async function getUserCustomTemplate(
+  uid: string,
+  templateId: string
+): Promise<CustomTemplateDefinition | null> {
+  const ref = doc(db, 'users', uid, 'custom_templates', templateId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return {
+    id: snap.id,
+    name: String(data.name || 'Untitled Theme'),
+    category: String(data.category || 'Custom'),
+    description: String(data.description || ''),
+    layout: data.layout || 'cron-sidebar-grid',
+    bgPattern: data.bgPattern || 'solid',
+    mode: data.mode || 'dark',
+    displayFont: data.displayFont || 'inter',
+    bodyFont: data.bodyFont || 'inter',
+    monoFamily: data.monoFamily || 'geist-mono',
+    radiusPx: typeof data.radiusPx === 'number' ? data.radiusPx : 12,
+    tokens: data.tokens || {},
+    ownerUid: data.ownerUid,
+    authorName: data.authorName,
+    shareId: data.shareId ?? null,
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+}
+
+export async function deleteUserCustomTemplate(
+  uid: string,
+  templateId: string
+): Promise<void> {
+  const ref = doc(db, 'users', uid, 'custom_templates', templateId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    const shareId = snap.data().shareId;
+    if (typeof shareId === 'string' && shareId.length >= 10) {
+      await deleteDoc(doc(db, 'shared_templates', shareId)).catch(() => {});
+    }
+  }
+  await deleteDoc(ref);
+}
+
+export async function publishSharedCustomTemplate(
+  uid: string,
+  template: CustomTemplateDefinition,
+  authorName?: string,
+  existingShareId?: string | null
+): Promise<string> {
+  const shareId =
+    existingShareId && existingShareId.length >= 10
+      ? existingShareId
+      : `tpl-${generateRandomId(8)}`;
+  const ref = doc(db, 'shared_templates', shareId);
+
+  let createdAtValue: unknown = serverTimestamp();
+  if (existingShareId) {
+    const existingSnap = await getDoc(ref);
+    if (existingSnap.exists()) {
+      createdAtValue = existingSnap.data().createdAt ?? serverTimestamp();
+    }
+  }
+
+  await setDoc(ref, {
+    ownerUid: uid,
+    name: (template.name || 'Custom Theme').slice(0, 80),
+    category: (template.category || 'Community').slice(0, 40),
+    description: (template.description || '').slice(0, 240),
+    layout: template.layout,
+    bgPattern: template.bgPattern,
+    mode: template.mode,
+    displayFont: template.displayFont,
+    bodyFont: template.bodyFont,
+    monoFamily: template.monoFamily,
+    radiusPx: template.radiusPx,
+    tokens: template.tokens,
+    authorName: (authorName || template.authorName || 'Anonymous Creator').slice(0, 80),
+    createdAt: createdAtValue,
+    updatedAt: serverTimestamp(),
+  });
+
+  // Link shareId to user's saved template if it exists
+  if (template.id && !template.id.startsWith('default')) {
+    await updateDoc(doc(db, 'users', uid, 'custom_templates', template.id), {
+      shareId,
+      updatedAt: serverTimestamp(),
+    }).catch(() => {});
+  }
+
+  return shareId;
+}
+
+export async function getSharedCustomTemplate(
+  shareId: string
+): Promise<CustomTemplateDefinition | null> {
+  if (!shareId || shareId.length < 8) return null;
+  const ref = doc(db, 'shared_templates', shareId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  const data = snap.data();
+
+  return {
+    id: snap.id,
+    name: String(data.name || 'Community Theme'),
+    category: String(data.category || 'Shared'),
+    description: String(data.description || ''),
+    layout: data.layout || 'cron-sidebar-grid',
+    bgPattern: data.bgPattern || 'solid',
+    mode: data.mode || 'dark',
+    displayFont: data.displayFont || 'inter',
+    bodyFont: data.bodyFont || 'inter',
+    monoFamily: data.monoFamily || 'geist-mono',
+    radiusPx: typeof data.radiusPx === 'number' ? data.radiusPx : 12,
+    tokens: data.tokens || {},
+    ownerUid: data.ownerUid,
+    authorName: data.authorName || 'Community Creator',
+    shareId: snap.id,
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),
   };

@@ -46,6 +46,46 @@ service cloud.firestore {
     //   - createdAt: timestamp (required, immutable)
     //   - updatedAt: timestamp (required)
     //
+    // Subcollection: users/{userId}/custom_templates
+    // Document ID: {templateId}
+    // Fields:
+    //   - ownerUid: string (required, immutable, must equal userId and request.auth.uid)
+    //   - name: string (required, size <= 80)
+    //   - category: string (required, size <= 40)
+    //   - description: string (required, size <= 240)
+    //   - layout: string (required, valid PresetLayoutKind enum)
+    //   - bgPattern: string (required, 'solid' | 'dots' | 'grid')
+    //   - mode: string (required, 'dark' | 'light')
+    //   - displayFont: string (required, valid TemplateFontFamily enum)
+    //   - bodyFont: string (required, valid TemplateFontFamily enum)
+    //   - monoFamily: string (required, 'geist-mono' | 'jetbrains-mono')
+    //   - radiusPx: number (required, 0 <= radiusPx <= 32)
+    //   - tokens: map (required, bounded theme color/gradient tokens)
+    //   - authorName: string (required, size <= 80)
+    //   - shareId: string or null (optional, if non-null string then size <= 64)
+    //   - createdAt: timestamp (required, immutable)
+    //   - updatedAt: timestamp (required)
+    //
+    // Collection: shared_templates
+    // Document ID: {shareId} (unguessable ID, size >= 8 && size <= 64)
+    // Public read-only snapshot via direct `get` only (`list` disabled). No PII allowed.
+    // Fields:
+    //   - ownerUid: string (required, immutable, must equal request.auth.uid on create)
+    //   - name: string (required, size <= 80)
+    //   - category: string (required, size <= 40)
+    //   - description: string (required, size <= 240)
+    //   - layout: string (required, valid PresetLayoutKind enum)
+    //   - bgPattern: string (required, 'solid' | 'dots' | 'grid')
+    //   - mode: string (required, 'dark' | 'light')
+    //   - displayFont: string (required, valid TemplateFontFamily enum)
+    //   - bodyFont: string (required, valid TemplateFontFamily enum)
+    //   - monoFamily: string (required, 'geist-mono' | 'jetbrains-mono')
+    //   - radiusPx: number (required, 0 <= radiusPx <= 32)
+    //   - tokens: map (required, bounded theme color/gradient tokens)
+    //   - authorName: string (required, size <= 80)
+    //   - createdAt: timestamp (required, immutable)
+    //   - updatedAt: timestamp (required)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -155,6 +195,112 @@ service cloud.firestore {
         data.updatedAt is timestamp;
     }
 
+    // Validate custom template layout kind enum
+    function isValidLayoutKind(layout) {
+      return layout is string &&
+        layout in [
+          'cron-sidebar-grid',
+          'horizontal-timeline',
+          'bento-dashboard',
+          'magazine-spread',
+          'day-columns',
+          'terminal-table',
+          'crimson-pulse',
+          'editorial-light-grid',
+          'poster-tiles',
+          'athletic-columns',
+          'daily-poster',
+          'daily-deck',
+          'exhibition-daily'
+        ];
+    }
+
+    // Validate template font family enum
+    function isValidTemplateFont(font) {
+      return font is string &&
+        font in [
+          'inter',
+          'geist',
+          'plus-jakarta',
+          'space-grotesk',
+          'dm-sans',
+          'newsreader',
+          'jetbrains-mono',
+          'syne',
+          'outfit'
+        ];
+    }
+
+    // Validate custom template tokens map structure, types, and length bounds
+    function isValidTemplateTokens(tokens) {
+      let requiredKeys = [
+        'canvasBg',
+        'surfaceBg',
+        'cardBg',
+        'cardElevatedBg',
+        'border',
+        'borderStrong',
+        'text',
+        'textMuted',
+        'accent',
+        'accentSoft'
+      ];
+      let allowedKeys = [
+        'canvasBg',
+        'surfaceBg',
+        'cardBg',
+        'cardElevatedBg',
+        'border',
+        'borderStrong',
+        'text',
+        'textMuted',
+        'accent',
+        'accentSoft',
+        'headerBannerBg'
+      ];
+      return tokens is map &&
+        tokens.keys().hasAll(requiredKeys) &&
+        tokens.keys().hasOnly(allowedKeys) &&
+        tokens.canvasBg is string && tokens.canvasBg.size() <= 64 &&
+        tokens.surfaceBg is string && tokens.surfaceBg.size() <= 64 &&
+        tokens.cardBg is string && tokens.cardBg.size() <= 64 &&
+        tokens.cardElevatedBg is string && tokens.cardElevatedBg.size() <= 64 &&
+        tokens.border is string && tokens.border.size() <= 64 &&
+        tokens.borderStrong is string && tokens.borderStrong.size() <= 64 &&
+        tokens.text is string && tokens.text.size() <= 64 &&
+        tokens.textMuted is string && tokens.textMuted.size() <= 64 &&
+        tokens.accent is string && tokens.accent.size() <= 64 &&
+        tokens.accentSoft is string && tokens.accentSoft.size() <= 64 &&
+        (!('headerBannerBg' in tokens) || tokens.headerBannerBg == null || (tokens.headerBannerBg is string && tokens.headerBannerBg.size() <= 256));
+    }
+
+    // Validate custom template core payload fields, types, and bounds
+    function isValidCustomTemplatePayload(data) {
+      return data.name is string &&
+        data.name.size() <= 80 &&
+        data.category is string &&
+        data.category.size() <= 40 &&
+        data.description is string &&
+        data.description.size() <= 240 &&
+        isValidLayoutKind(data.layout) &&
+        data.bgPattern is string &&
+        data.bgPattern in ['solid', 'dots', 'grid'] &&
+        data.mode is string &&
+        data.mode in ['dark', 'light'] &&
+        isValidTemplateFont(data.displayFont) &&
+        isValidTemplateFont(data.bodyFont) &&
+        data.monoFamily is string &&
+        data.monoFamily in ['geist-mono', 'jetbrains-mono'] &&
+        data.radiusPx is number &&
+        data.radiusPx >= 0 &&
+        data.radiusPx <= 32 &&
+        isValidTemplateTokens(data.tokens) &&
+        data.authorName is string &&
+        data.authorName.size() <= 80 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
     // ===============================================================
     // Domain Validators (Used in BOTH create and update)
     // ===============================================================
@@ -222,6 +368,77 @@ service cloud.firestore {
         isValidTimetablePayload(data);
     }
 
+    function isValidUserCustomTemplate(data, userId) {
+      let requiredFields = [
+        'ownerUid',
+        'name',
+        'category',
+        'description',
+        'layout',
+        'bgPattern',
+        'mode',
+        'displayFont',
+        'bodyFont',
+        'monoFamily',
+        'radiusPx',
+        'tokens',
+        'authorName',
+        'createdAt',
+        'updatedAt'
+      ];
+      let allowedFields = [
+        'ownerUid',
+        'name',
+        'category',
+        'description',
+        'layout',
+        'bgPattern',
+        'mode',
+        'displayFont',
+        'bodyFont',
+        'monoFamily',
+        'radiusPx',
+        'tokens',
+        'authorName',
+        'shareId',
+        'createdAt',
+        'updatedAt'
+      ];
+      return hasOnlyAllowedFields(allowedFields) &&
+        hasRequiredFields(requiredFields) &&
+        data.ownerUid is string &&
+        data.ownerUid == userId &&
+        isValidCustomTemplatePayload(data) &&
+        (!('shareId' in data) || data.shareId == null || (data.shareId is string && data.shareId.size() <= 64));
+    }
+
+    function isValidSharedTemplate(data, shareId) {
+      let allowedFields = [
+        'ownerUid',
+        'name',
+        'category',
+        'description',
+        'layout',
+        'bgPattern',
+        'mode',
+        'displayFont',
+        'bodyFont',
+        'monoFamily',
+        'radiusPx',
+        'tokens',
+        'authorName',
+        'createdAt',
+        'updatedAt'
+      ];
+      return shareId is string &&
+        shareId.size() >= 8 &&
+        shareId.size() <= 64 &&
+        hasOnlyAllowedFields(allowedFields) &&
+        hasRequiredFields(allowedFields) &&
+        data.ownerUid is string &&
+        isValidCustomTemplatePayload(data);
+    }
+
     // ===============================================================
     // Collection Rules
     // ===============================================================
@@ -251,6 +468,20 @@ service cloud.firestore {
           request.resource.data.createdAt == resource.data.createdAt;
         allow delete: if isOwner(userId);
       }
+
+      // Private user-owned custom templates
+      match /custom_templates/{templateId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+          isValidUserCustomTemplate(request.resource.data, userId) &&
+          request.resource.data.ownerUid == request.auth.uid;
+        allow update: if isOwner(userId) &&
+          isValidUserCustomTemplate(request.resource.data, userId) &&
+          areImmutableFieldsUnchanged(['ownerUid', 'createdAt']) &&
+          request.resource.data.ownerUid == resource.data.ownerUid &&
+          request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isOwner(userId);
+      }
     }
 
     // Public read-only shared timetable snapshots (unguessable ID required; no list/PII)
@@ -266,6 +497,22 @@ service cloud.firestore {
         request.resource.data.ownerUid == resource.data.ownerUid &&
         request.resource.data.createdAt == resource.data.createdAt &&
         isValidSharedTimetable(request.resource.data, shareId);
+      allow delete: if isAuthenticated() && isDocOwner();
+    }
+
+    // Public read-only shared custom template snapshots (unguessable ID required; no list/PII)
+    match /shared_templates/{shareId} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if isAuthenticated() &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        isValidSharedTemplate(request.resource.data, shareId);
+      allow update: if isAuthenticated() &&
+        isDocOwner() &&
+        areImmutableFieldsUnchanged(['ownerUid', 'createdAt']) &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidSharedTemplate(request.resource.data, shareId);
       allow delete: if isAuthenticated() && isDocOwner();
     }
 

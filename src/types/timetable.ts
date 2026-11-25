@@ -167,3 +167,53 @@ export interface SavedTimetableSummary {
   shareId?: string | null;
   updatedAt: string;
 }
+
+export interface CustomTemplateDefinition {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  layout: PresetLayoutKind;
+  bgPattern: 'solid' | 'dots' | 'grid';
+  mode: 'dark' | 'light';
+  displayFont: TemplateFontFamily;
+  bodyFont: TemplateFontFamily;
+  monoFamily: 'geist-mono' | 'jetbrains-mono';
+  radiusPx: number;
+  tokens: {
+    canvasBg: string;
+    surfaceBg: string;
+    cardBg: string;
+    cardElevatedBg: string;
+    border: string;
+    borderStrong: string;
+    text: string;
+    textMuted: string;
+    accent: string;
+    accentSoft: string;
+    headerBannerBg?: string;
+  };
+  ownerUid?: string;
+  authorName?: string;
+  shareId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export function toPresetTemplate(c: CustomTemplateDefinition): PresetTemplate {
+  return {
+    id: c.id as PresetTemplateId,
+    name: c.name,
+    category: c.category || 'Custom',
+    layoutLabel: c.name,
+    description: c.description || 'Custom crafted timetable theme.',
+    layout: c.layout,
+    bgPattern: c.bgPattern,
+    mode: c.mode,
+    displayFont: c.displayFont,
+    bodyFont: c.bodyFont,
+    monoFamily: c.monoFamily,
+    radiusPx: c.radiusPx,
+    tokens: c.tokens,
+  };
+}

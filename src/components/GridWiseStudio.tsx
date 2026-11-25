@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { AnimatePresence, motion } from 'motion/react';
@@ -1120,6 +1121,18 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                     badge={savedList.length > 0 ? String(savedList.length) : undefined}
                     onClick={() => handleNavClick('saved')}
                   />
+                  <Link
+                    href="/theme-creator"
+                    className="flex w-full items-center justify-between overflow-hidden rounded-lg px-2.5 py-2 text-xs font-medium text-zinc-400 transition hover:bg-[#18181E] hover:text-white"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Palette className="h-4 w-4 text-blue-400" />
+                      <span>Theme Creator</span>
+                    </span>
+                    <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-blue-400">
+                      NEW
+                    </span>
+                  </Link>
                 </nav>
 
                 <div className="space-y-2 px-1">
@@ -1539,13 +1552,22 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                             Each template is a complete visual preset. Select any card to preview your entered timetable live.
                           </p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={handleGenerate}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#09090B] hover:bg-zinc-200"
-                        >
-                          Use {activeTemplate.name} & Generate
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href="/theme-creator"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3.5 py-2 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20"
+                          >
+                            <Palette className="h-3.5 w-3.5" />
+                            Create Your Template
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={handleGenerate}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#09090B] hover:bg-zinc-200"
+                          >
+                            Use {activeTemplate.name} & Generate
+                          </button>
+                        </div>
                       </div>
 
                       <div className="grid items-start gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
