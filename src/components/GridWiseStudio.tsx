@@ -1403,6 +1403,17 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                                 type="button"
                                 onClick={() => {
                                   setUserMenuOpen(false);
+                                  router.push('/about');
+                                }}
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-zinc-200 transition hover:bg-[#1C1D26]"
+                              >
+                                <Globe className="h-3.5 w-3.5 text-emerald-400" />
+                                About GridWiser
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setUserMenuOpen(false);
                                   setSignOutConfirmOpen(true);
                                 }}
                                 className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-rose-400 transition hover:bg-rose-500/10"
@@ -1504,8 +1515,8 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                       }
                     }}
                     className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${shareId
-                        ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400/50'
-                        : 'border-[#25252D] bg-[#131317] text-zinc-200 hover:border-zinc-500'
+                      ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400/50'
+                      : 'border-[#25252D] bg-[#131317] text-zinc-200 hover:border-zinc-500'
                       }`}
                   >
                     {shareId ? (
@@ -1719,11 +1730,10 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                                         type="button"
                                         disabled={sharingTemplateId === customDef.id}
                                         onClick={() => void handleShareCustomTemplate(customDef)}
-                                        className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-medium transition ${
-                                          customDef.shareId
-                                            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
-                                            : 'border-[#2C2C38] bg-[#1A1A22] text-zinc-200 hover:border-zinc-500 hover:text-white'
-                                        } disabled:opacity-60`}
+                                        className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-medium transition ${customDef.shareId
+                                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                                          : 'border-[#2C2C38] bg-[#1A1A22] text-zinc-200 hover:border-zinc-500 hover:text-white'
+                                          } disabled:opacity-60`}
                                       >
                                         {sharingTemplateId === customDef.id ? (
                                           <Loader2 className="h-2.5 w-2.5 animate-spin" />

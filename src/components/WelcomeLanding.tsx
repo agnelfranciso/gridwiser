@@ -43,10 +43,10 @@ export function WelcomeLanding({
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <GridWiseBrand size="md" tone="dark" />
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <a
               href="/about"
-              className="hidden rounded-full px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:text-white sm:inline-block"
+              className="rounded-full px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-white/[0.06] hover:text-white sm:px-3"
             >
               About
             </a>
@@ -465,129 +465,45 @@ export function WelcomeLanding({
         </div>
       </section>
 
-      {/* Global Modern Footer */}
-      <footer className="border-t border-white/[0.08] bg-[#020306] py-12 text-zinc-400">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Col 1: Brand */}
-            <div className="space-y-3">
-              <GridWiseBrand size="md" tone="dark" />
-              <p className="text-xs leading-relaxed text-zinc-500">
-                Precision weekly schedule builder with automatic conflict handling, AI extraction, and 8 handcrafted architectural themes.
-              </p>
-              <div className="flex items-center gap-2 pt-1 font-mono text-[11px] text-zinc-500">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Cloud Sync · Instant Export
-              </div>
-            </div>
-
-            {/* Col 2: Studio Tools */}
-            <div className="space-y-2.5">
-              <div className="text-xs font-semibold uppercase tracking-wider text-white">Studio</div>
-              <ul className="space-y-2 text-xs">
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => onGetStarted()}
-                    className="transition hover:text-white"
-                  >
-                    Get Started (Wizard)
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={onOpenAiImport}
-                    className="transition hover:text-white"
-                  >
-                    AI Import (Image/PDF)
-                  </button>
-                </li>
-                <li>
-                  <a href="#templates" className="transition hover:text-white">
-                    Explore 8 Design Themes
-                  </a>
-                </li>
-                <li>
-                  <a href="#workflow" className="transition hover:text-white">
-                    How it Works
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Col 3: Export & Integrations */}
-            <div className="space-y-2.5">
-              <div className="text-xs font-semibold uppercase tracking-wider text-white">Export & Sync</div>
-              <ul className="space-y-2 text-xs text-zinc-400">
-                <li className="flex items-center gap-1.5">
-                  <span className="text-zinc-500">·</span> High-Res PNG (Retina 2x)
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <span className="text-zinc-500">·</span> Vector Print & PDF
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <span className="text-zinc-500">·</span> Apple / Google Calendar (.ICS)
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <span className="text-zinc-500">·</span> Public Read-Only Share Links
-                </li>
-              </ul>
-            </div>
-
-            {/* Col 4: Legal & Policies */}
-            <div className="space-y-2.5">
-              <div className="text-xs font-semibold uppercase tracking-wider text-white">Trust & Legal</div>
-              <ul className="space-y-2 text-xs">
-                <li>
-                  <a href="/legal#terms" className="transition hover:text-white">
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="/legal#privacy" className="transition hover:text-white">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="/legal#security" className="transition hover:text-white">
-                    Security & Data Protection
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="/signin"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onOpenAuth('signin');
-                    }}
-                    className="transition hover:text-white"
-                  >
-                    Google OAuth Sign In
-                  </a>
-                </li>
-              </ul>
-            </div>
+      {/* Minimal Footer */}
+      <footer className="border-t border-white/[0.08] bg-[#020306] py-8 text-zinc-400">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
+          <div className="flex flex-col items-center gap-1.5 sm:items-start">
+            <GridWiseBrand size="sm" tone="dark" />
+            <p className="text-[11px] text-zinc-500">
+              © 2026 GridWiser · Built for students by{' '}
+              <a
+                href="https://agnel.is-a.dev/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-400 transition hover:text-white"
+              >
+                Agnel Francis Olakkengil
+              </a>
+            </p>
           </div>
 
-          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/[0.06] pt-6 text-[11px] text-zinc-500 sm:flex-row">
-            <p>© 2026 GridWiser Studio. Built for students, engineers, and educators.</p>
-            <div className="flex items-center gap-6">
-              <a href="/about" className="hover:text-zinc-300">
-                About
-              </a>
-              <span className="text-zinc-700">·</span>
-              <a href="/legal" className="hover:text-zinc-300">
-                Terms & Privacy
-              </a>
-              <span className="text-zinc-700">·</span>
-              <a href="#templates" className="hover:text-zinc-300">
-                Presets
-              </a>
-              <span className="text-zinc-700">·</span>
-              <span className="text-zinc-600">Strict Auth Policy (Google Only)</span>
-            </div>
-          </div>
+          <nav className="flex flex-wrap items-center justify-center gap-5 text-xs text-zinc-400">
+            <a href="/about" className="transition hover:text-white">
+              About
+            </a>
+            <a href="#templates" className="transition hover:text-white">
+              Themes
+            </a>
+            <a href="/legal" className="transition hover:text-white">
+              Legal &amp; Privacy
+            </a>
+            <a
+              href="/signin"
+              onClick={(e) => {
+                e.preventDefault();
+                onOpenAuth('signin');
+              }}
+              className="transition hover:text-white"
+            >
+              Sign In
+            </a>
+          </nav>
         </div>
       </footer>
     </div>
