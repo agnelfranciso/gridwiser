@@ -2159,6 +2159,208 @@ export function TimetableRenderer({
               )}
             </div>
           </div>
+        ) : template.layout === 'crimson-pulse' ? (
+          /* 13. CRIMSON PULSE: OBSIDIAN CARDS + SEGMENTED SUMMARY BAR */
+          (() => {
+            const crimsonPalette = ['#E11D48', '#FB7185', '#FDA4AF', '#E4E4E7', '#9F1239'];
+            const subjectTotals = Array.from(
+              schedule.blocks.reduce((map, b) => {
+                const hrs = (b.endMin - b.startMin) / 60;
+                map.set(b.name, (map.get(b.name) ?? 0) + hrs);
+                return map;
+              }, new Map<string, number>())
+            )
+              .map(([name, hours]) => ({ name, hours: Math.round(hours * 10) / 10 }))
+              .sort((a, b) => b.hours - a.hours);
+            const totalHrs = subjectTotals.reduce((acc, s) => acc + s.hours, 0) || 1;
+
+            return (
+              <div className="space-y-4">
+                {/* Week Summary Segmented Progress Card */}
+                <div
+                  className="rounded-2xl border p-4"
+                  style={{
+                    backgroundColor: tokens.cardBg,
+                    borderColor: tokens.border,
+                  }}
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-semibold" style={{ color: tokens.text }}>
+                        Week summary
+                      </div>
+                      <div className="mt-0.5 text-[11px]" style={{ color: tokens.textMuted }}>
+                        Week total · {schedule.stats.totalHours}h across {schedule.stats.totalSessions} sessions
+                      </div>
+                    </div>
+                    <div
+                      className="rounded-full px-2.5 py-0.5 font-mono text-[10px] font-medium"
+                      style={{
+                        backgroundColor: tokens.accentSoft,
+                        color: '#FDA4AF',
+                        fontFamily: fontMono,
+                      }}
+                    >
+                      {schedule.stats.totalSubjects} subjects
+                    </div>
+                  </div>
+
+                  {/* Segmented Bar */}
+                  <div className="mt-3.5 flex h-2.5 w-full gap-1 overflow-hidden rounded-full bg-[#1E1E24] p-0.5">
+                    {subjectTotals.slice(0, 5).map((item, idx) => (
+                      <div
+                        key={item.name}
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${Math.max(6, (item.hours / totalHrs) * 100)}%`,
+                          backgroundColor: crimsonPalette[idx % crimsonPalette.length],
+                        }}
+                        title={`${item.name}: ${item.hours}h`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Legend */}
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]">
+                    {subjectTotals.slice(0, 5).map((item, idx) => (
+                      <div key={item.name} className="inline-flex items-center gap-1.5">
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: crimsonPalette[idx % crimsonPalette.length] }}
+                        />
+                        <span className="font-medium" style={{ color: tokens.text }}>
+                          {item.name}
+                        </span>
+                        <span style={{ color: tokens.textMuted, fontFamily: fontMono }}>
+                          {item.hours}h
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Day Cards Grid */}
+                <div
+                  className={`grid gap-3 ${
+                    schedule.days.length >= 6
+                      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-5'
+                  }`}
+                >
+                  {schedule.days.map((day) => {
+                    const dayItems = getDayVisualItems(day);
+                    return (
+                      <div
+                        key={day}
+                        className="flex flex-col rounded-2xl border p-3.5"
+                        style={{
+                          backgroundColor: tokens.cardBg,
+                          borderColor: tokens.border,
+                        }}
+                      >
+                        <div className="mb-3 flex items-center justify-between">
+                          <span
+                            className="text-xs font-semibold tracking-tight"
+                            style={{ color: tokens.text, fontFamily: fontDisplay }}
+                          >
+                            {day}
+                          </span>
+                          <span
+                            className="rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                            style={{
+                              borderColor: tokens.border,
+                              backgroundColor: tokens.cardElevatedBg,
+                              color: tokens.textMuted,
+                              fontFamily: fontMono,
+                            }}
+                          >
+                            {dayItems.length}
+                          </span>
+                        </div>
+
+                        {dayItems.length === 0 ? (
+                          <div
+                            className="flex flex-1 items-center justify-center rounded-xl border border-dashed py-6 text-[11px]"
+                            style={{ borderColor: tokens.border, color: tokens.textMuted }}
+                          >
+                            Free day
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {dayItems.map((item) => {
+                              if (item.kind === 'merged') {
+                                return (
+                                  <div
+                                    key={item.group.id}
+                                    onClick={() => interactive && onClickBlock?.(item.group.blocks[0])}
+                                    className={`rounded-xl border p-2.5 transition ${
+                                      interactive ? 'cursor-pointer hover:border-[#E11D48]/50' : ''
+                                    }`}
+                                    style={{
+                                      backgroundColor: tokens.cardElevatedBg,
+                                      borderColor: tokens.border,
+                                    }}
+                                  >
+                                    <div className="flex items-center justify-between text-[10px]" style={{ color: tokens.textMuted, fontFamily: fontMono }}>
+                                      <span>
+                                        {formatTimeDisplay(item.group.blocks[0].startTime, meta.timeFormat)}
+                                      </span>
+                                      <span className="rounded-full px-1.5 py-0.5 text-[9px]" style={{ backgroundColor: tokens.accentSoft, color: '#FDA4AF' }}>
+                                        Merged
+                                      </span>
+                                    </div>
+                                    <div className="mt-1.5 space-y-1">
+                                      {item.group.blocks.map((b) => (
+                                        <div key={b.occurrenceId} className="text-xs font-medium" style={{ color: tokens.text }}>
+                                          {b.name}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              const blk = item.block;
+                              const durHrs = Math.round(((blk.endMin - blk.startMin) / 60) * 10) / 10;
+                              return (
+                                <div
+                                  key={blk.occurrenceId}
+                                  onClick={() => interactive && onClickBlock?.(blk)}
+                                  className={`rounded-xl border p-2.5 transition ${
+                                    interactive ? 'cursor-pointer hover:border-[#E11D48]/50' : ''
+                                  }`}
+                                  style={{
+                                    backgroundColor: tokens.cardElevatedBg,
+                                    borderColor: tokens.border,
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between gap-2 text-[10px]" style={{ color: tokens.textMuted, fontFamily: fontMono }}>
+                                    <span>
+                                      {formatTimeDisplay(blk.startTime, meta.timeFormat)}–{formatTimeDisplay(blk.endTime, meta.timeFormat)}
+                                    </span>
+                                    <span style={{ color: '#FDA4AF' }}>{durHrs}h</span>
+                                  </div>
+                                  <div className="mt-1 text-xs font-semibold leading-snug" style={{ color: tokens.text }}>
+                                    {blk.name}
+                                  </div>
+                                  {(blk.room || blk.code) && (
+                                    <div className="mt-1 flex items-center justify-between text-[10px]" style={{ color: tokens.textMuted }}>
+                                      <span className="truncate">{blk.room || blk.code}</span>
+                                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tokens.accent }} />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()
         ) : (
           /* 12. GALLERY PAPER */
           renderProportionalGrid(false, true)

@@ -117,7 +117,8 @@ service cloud.firestore {
           'precision-athletic',
           'acid-daily-poster',
           'editorial-daily-deck',
-          'exhibition-blue-daily'
+          'exhibition-blue-daily',
+          'crimson-pulse'
         ];
     }
 

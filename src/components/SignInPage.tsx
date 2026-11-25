@@ -16,6 +16,7 @@ import {
 import { auth, formatFirebaseAuthError, googleProvider, type AuthErrorInfo } from '@/lib/firebase';
 import { upsertUserProfile } from '@/lib/firestore-timetables';
 import { GridWiseBrand, GridWiseLogoMark } from '@/components/GridWiseLogo';
+import { GoogleOneTap } from '@/components/GoogleOneTap';
 import { EASE_SMOOTH, TRANSITION_FAST } from '@/components/MotionPrimitives';
 
 function GoogleSvg() {
@@ -79,10 +80,10 @@ export function SignInPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#03050A]">
         <motion.div
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ opacity: [0.6, 1, 0.6] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <GridWiseLogoMark size={36} tone="dark" />
+          <GridWiseLogoMark size={40} tone="dark" animated />
         </motion.div>
       </div>
     );
@@ -90,6 +91,16 @@ export function SignInPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#03050A] p-4 text-zinc-100 sm:p-8">
+      <GoogleOneTap
+        disabled={loading || success}
+        onSuccess={() => {
+          setSuccess(true);
+          setTimeout(() => {
+            router.replace(nextUrl);
+          }, 450);
+        }}
+        onError={(err) => setError(formatFirebaseAuthError(err))}
+      />
       {/* Subtle outer cobalt ambient glow (no background grid) */}
       <div
         className="pointer-events-none absolute inset-0"

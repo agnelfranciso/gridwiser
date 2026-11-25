@@ -39,7 +39,8 @@ export type PresetTemplateId =
   | 'precision-athletic'
   | 'acid-daily-poster'
   | 'editorial-daily-deck'
-  | 'exhibition-blue-daily';
+  | 'exhibition-blue-daily'
+  | 'crimson-pulse';
 
 export type PresetLayoutKind =
   | 'cron-sidebar-grid'
@@ -48,6 +49,7 @@ export type PresetLayoutKind =
   | 'magazine-spread'
   | 'day-columns'
   | 'terminal-table'
+  | 'crimson-pulse'
   | 'editorial-light-grid'
   | 'poster-tiles'
   | 'athletic-columns'

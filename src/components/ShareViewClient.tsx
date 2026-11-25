@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { toPng } from 'html-to-image';
@@ -11,11 +11,15 @@ import {
   Copy,
   Check,
   ArrowUpRight,
+  Smartphone,
+  Monitor,
+  ChevronDown,
 } from 'lucide-react';
 import { GridWiseBrand } from '@/components/GridWiseLogo';
 import type { DayOfWeek, SavedTimetableRecord } from '@/types/timetable';
 import { getPresetTemplate } from '@/lib/themes';
 import { analyzeSchedule, generateICSFromSubjects } from '@/lib/schedule-engine';
+import { exportTimetableWallpaper, type WallpaperFormat } from '@/lib/wallpaper-export';
 import { TimetableRenderer } from '@/components/TimetableRenderer';
 import { TRANSITION_VIEW } from '@/components/MotionPrimitives';
 
@@ -25,6 +29,20 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
   const [copied, setCopied] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingZip, setExportingZip] = useState(false);
+  const [exportingWallpaper, setExportingWallpaper] = useState<WallpaperFormat | null>(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setExportMenuOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', onPointerDown);
+    return () => window.removeEventListener('mousedown', onPointerDown);
+  }, [exportMenuOpen]);
 
   const template = useMemo(
     () => getPresetTemplate(timetable.templateId),
@@ -167,6 +185,22 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
     URL.revokeObjectURL(url);
   };
 
+  const handleExportWallpaper = async (format: WallpaperFormat) => {
+    if (!canvasRef.current) return;
+    setExportingWallpaper(format);
+    try {
+      await exportTimetableWallpaper({
+        node: canvasRef.current,
+        template,
+        title: timetable.meta.title,
+        format,
+        dayLabel: isDailyTemplate ? activeDay : undefined,
+      });
+    } finally {
+      setExportingWallpaper(null);
+    }
+  };
+
   const handleCopyLink = async () => {
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
@@ -205,12 +239,12 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
               href={`/?load=${encodeURIComponent(timetable.id)}`}
               className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#09090B] hover:bg-zinc-200 sm:hidden"
             >
-              Remix
+              Use Template
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:overflow-visible sm:pb-0">
+          <div className="flex items-center gap-1.5 sm:gap-2" ref={exportMenuRef}>
             <button
               type="button"
               onClick={handleCopyLink}
@@ -219,47 +253,133 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
               {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
               {copied ? 'Copied' : 'Copy URL'}
             </button>
-            <button
-              type="button"
-              onClick={handleExportPng}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#25252D] bg-[#131317] px-3 py-1.5 text-xs font-medium text-zinc-200 hover:border-zinc-500"
-            >
-              <Download className="h-3.5 w-3.5" />
-              {isDailyTemplate ? `${activeDay} PNG` : 'PNG'}
-            </button>
-            {isDailyTemplate && (
+
+            <div className="relative">
               <button
                 type="button"
-                disabled={exportingZip}
-                onClick={handleExportAllDaysZip}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#25252D] bg-[#131317] px-3 py-1.5 text-xs font-medium text-zinc-200 hover:border-zinc-500 disabled:opacity-60"
+                onClick={() => setExportMenuOpen((prev) => !prev)}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#25252D] bg-[#131317] px-3 py-1.5 text-xs font-medium text-zinc-200 hover:border-zinc-500"
               >
                 <Download className="h-3.5 w-3.5" />
-                {exportingZip ? 'Zipping...' : 'All Days (.ZIP)'}
+                Export
+                <ChevronDown
+                  className={`h-3.5 w-3.5 transition-transform ${
+                    exportMenuOpen ? 'rotate-180' : ''
+                  }`}
+                />
               </button>
-            )}
-            <button
-              type="button"
-              disabled={exportingPdf}
-              onClick={handleExportPdf}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#25252D] bg-[#131317] px-3 py-1.5 text-xs font-medium text-zinc-200 hover:border-zinc-500 disabled:opacity-60"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              {exportingPdf ? 'Exporting...' : 'PDF'}
-            </button>
-            <button
-              type="button"
-              onClick={handleExportIcs}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#25252D] bg-[#131317] px-3 py-1.5 text-xs font-medium text-zinc-200 hover:border-zinc-500"
-            >
-              <CalendarPlus className="h-3.5 w-3.5" />
-              .ICS
-            </button>
+
+              {exportMenuOpen && (
+                <div className="absolute right-0 z-40 mt-2 w-60 rounded-xl border border-[#27272F] bg-[#0D0E12] p-1.5 shadow-2xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      void handleExportPng();
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22]"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Download className="h-3.5 w-3.5 text-zinc-400" />
+                      {isDailyTemplate ? `${activeDay} Image` : '2× Retina Image'}
+                    </span>
+                    <span className="font-mono text-[10px] text-zinc-500">PNG</span>
+                  </button>
+                  {isDailyTemplate && (
+                    <button
+                      type="button"
+                      disabled={exportingZip}
+                      onClick={() => {
+                        setExportMenuOpen(false);
+                        void handleExportAllDaysZip();
+                      }}
+                      className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22] disabled:opacity-50"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Download className="h-3.5 w-3.5 text-zinc-400" />
+                        {exportingZip ? 'Zipping...' : 'All Days'}
+                      </span>
+                      <span className="font-mono text-[10px] text-zinc-500">.ZIP</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={exportingPdf}
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      void handleExportPdf();
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22] disabled:opacity-50"
+                  >
+                    <span className="flex items-center gap-2">
+                      <FileText className="h-3.5 w-3.5 text-zinc-400" />
+                      {exportingPdf ? 'Exporting...' : 'Print-Ready'}
+                    </span>
+                    <span className="font-mono text-[10px] text-zinc-500">PDF</span>
+                  </button>
+
+                  <div className="my-1 border-t border-[#1E1F27]" />
+
+                  <button
+                    type="button"
+                    disabled={exportingWallpaper !== null}
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      void handleExportWallpaper('lockscreen');
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22] disabled:opacity-50"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Smartphone className="h-3.5 w-3.5 text-blue-400" />
+                      {exportingWallpaper === 'lockscreen'
+                        ? 'Rendering...'
+                        : 'Phone Lockscreen'}
+                    </span>
+                    <span className="font-mono text-[10px] text-zinc-500">9:16</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={exportingWallpaper !== null}
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      void handleExportWallpaper('desktop');
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22] disabled:opacity-50"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Monitor className="h-3.5 w-3.5 text-blue-400" />
+                      {exportingWallpaper === 'desktop'
+                        ? 'Rendering...'
+                        : 'Desktop Wallpaper'}
+                    </span>
+                    <span className="font-mono text-[10px] text-zinc-500">16:9</span>
+                  </button>
+
+                  <div className="my-1 border-t border-[#1E1F27]" />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      handleExportIcs();
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22]"
+                  >
+                    <span className="flex items-center gap-2">
+                      <CalendarPlus className="h-3.5 w-3.5 text-zinc-400" />
+                      Calendar Feed
+                    </span>
+                    <span className="font-mono text-[10px] text-zinc-500">.ICS</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
             <Link
               href={`/?load=${encodeURIComponent(timetable.id)}`}
               className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-white px-3.5 py-1.5 text-xs font-semibold text-[#09090B] hover:bg-zinc-200 sm:inline-flex"
             >
-              Remix in Studio
+              Use as Template
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
           </div>

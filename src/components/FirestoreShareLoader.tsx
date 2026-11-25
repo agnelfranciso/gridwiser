@@ -28,9 +28,9 @@ export function FirestoreShareLoader({ shareId }: { shareId: string }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#09090B] text-zinc-300">
-        <GridWiseLogoMark size={36} tone="dark" />
-        <p className="font-mono text-xs text-zinc-500">Loading shared timetable...</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#050812] text-zinc-300">
+        <GridWiseLogoMark size={42} tone="dark" animated />
+        <p className="font-mono text-xs text-zinc-400">Loading shared timetable...</p>
       </div>
     );
   }

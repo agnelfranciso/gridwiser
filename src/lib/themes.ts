@@ -332,6 +332,34 @@ export const PRESET_TEMPLATES: PresetTemplate[] = [
       accentSoft: 'rgba(13, 14, 18, 0.1)',
     },
   },
+  {
+    id: 'crimson-pulse',
+    name: 'Crimson Pulse',
+    category: 'Dark Telemetry',
+    layoutLabel: 'Crimson Wave + Summary Bar',
+    description: 'Pitch-black obsidian cards beneath a sweeping ruby-crimson wave header and segmented weekly load bar.',
+    layout: 'crimson-pulse',
+    bgPattern: 'solid',
+    mode: 'dark',
+    displayFont: 'plus-jakarta',
+    bodyFont: 'inter',
+    monoFamily: 'geist-mono',
+    radiusPx: 16,
+    tokens: {
+      canvasBg: '#09090B',
+      surfaceBg: '#0F0F12',
+      cardBg: '#141417',
+      cardElevatedBg: '#1B1B1F',
+      border: '#242429',
+      borderStrong: '#383842',
+      text: '#FAFAFA',
+      textMuted: '#94949E',
+      accent: '#E11D48',
+      accentSoft: 'rgba(225, 29, 72, 0.16)',
+      headerBannerBg:
+        'radial-gradient(95% 130% at 86% 0%, rgba(225, 29, 72, 0.62) 0%, rgba(153, 27, 27, 0.36) 36%, rgba(20, 20, 23, 0.96) 72%, #0F0F12 100%)',
+    },
+  },
 ];
 
 export function getPresetTemplate(id: PresetTemplateId | string): PresetTemplate {

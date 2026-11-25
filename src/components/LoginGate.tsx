@@ -15,6 +15,7 @@ import {
 import { auth, formatFirebaseAuthError, googleProvider, type AuthErrorInfo } from '@/lib/firebase';
 import { upsertUserProfile } from '@/lib/firestore-timetables';
 import { GridWiseBrand, GridWiseLogoMark } from '@/components/GridWiseLogo';
+import { GoogleOneTap } from '@/components/GoogleOneTap';
 import { EASE_SMOOTH, TRANSITION_FAST } from '@/components/MotionPrimitives';
 import type { PresetTemplateId, SubjectEntry, TimetableMeta } from '@/types/timetable';
 import { getPresetTemplate } from '@/lib/themes';
@@ -64,6 +65,14 @@ export function LoginGate({ meta, subjects, templateId, onBack, onSuccess }: Log
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#03050A] p-4 text-zinc-100 sm:p-8">
+      <GoogleOneTap
+        disabled={loading || success}
+        onSuccess={() => {
+          setSuccess(true);
+          setTimeout(() => onSuccess(), 450);
+        }}
+        onError={(err) => setError(formatFirebaseAuthError(err))}
+      />
       {/* Subtle outer cobalt ambient glow (no background grid) */}
       <div
         className="pointer-events-none absolute inset-0"

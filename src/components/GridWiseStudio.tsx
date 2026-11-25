@@ -25,9 +25,13 @@ import {
   LogOut,
   LogIn,
   Monitor,
+  Smartphone,
+  Undo2,
+  Redo2,
   Lock,
   Globe,
   Copy,
+  ChevronDown,
 } from 'lucide-react';
 import {
   ALL_DAYS,
@@ -39,7 +43,7 @@ import {
   type SubjectEntry,
   type TimetableMeta,
 } from '@/types/timetable';
-import { auth } from '@/lib/firebase';
+import { auth, formatFirebaseAuthError } from '@/lib/firebase';
 import {
   deleteUserTimetable,
   getUserTimetable,
@@ -50,6 +54,10 @@ import {
   upsertUserProfile,
 } from '@/lib/firestore-timetables';
 import { getPresetTemplate, PRESET_TEMPLATES } from '@/lib/themes';
+import {
+  exportTimetableWallpaper,
+  type WallpaperFormat,
+} from '@/lib/wallpaper-export';
 import {
   analyzeSchedule,
   generateICSFromSubjects,
@@ -64,6 +72,7 @@ import { OverlapAlertModal } from '@/components/OverlapAlertModal';
 import { AuthModal } from '@/components/AuthModal';
 import { LoginGate } from '@/components/LoginGate';
 import { GridWiseBrand, GridWiseLogoMark } from '@/components/GridWiseLogo';
+import { GoogleOneTap } from '@/components/GoogleOneTap';
 import {
   AiImportButton,
   AnimatedModalShell,
@@ -129,21 +138,145 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   const [activeDailyDay, setActiveDailyDay] = useState<DayOfWeek>('Mon');
   const [exportingAllDays, setExportingAllDays] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingWallpaper, setExportingWallpaper] = useState<WallpaperFormat | null>(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const [mobileNoticeOpen, setMobileNoticeOpen] = useState(false);
   const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [historyCounts, setHistoryCounts] = useState({ undo: 0, redo: 0 });
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const dailyExportRefs = useRef<Partial<Record<DayOfWeek, HTMLDivElement | null>>>({});
   const hasDraftSubjectsRef = useRef<boolean>(subjects.length > 0);
   const viewModeRef = useRef<ViewMode>(initialRecord ? 'studio' : 'welcome');
-  // Stable refs so onAuthStateChanged can read latest state without stale closure
+  // Stable refs so onAuthStateChanged & keyboard shortcuts can read latest state
   const metaRef = useRef(meta);
   const subjectsRef = useRef(subjects);
   const templateIdRef = useRef(templateId);
+  const undoStackRef = useRef<
+    Array<{ meta: TimetableMeta; subjects: SubjectEntry[]; templateId: PresetTemplateId }>
+  >([]);
+  const redoStackRef = useRef<
+    Array<{ meta: TimetableMeta; subjects: SubjectEntry[]; templateId: PresetTemplateId }>
+  >([]);
 
   useEffect(() => { metaRef.current = meta; }, [meta]);
   useEffect(() => { subjectsRef.current = subjects; }, [subjects]);
   useEffect(() => { templateIdRef.current = templateId; }, [templateId]);
+
+  const showToast = useCallback((text: string, type: 'ok' | 'err' = 'ok') => {
+    setToast({ text, type });
+    setTimeout(() => {
+      setToast((curr) => (curr?.text === text ? null : curr));
+    }, 3200);
+  }, []);
+
+  const syncHistoryCounts = useCallback(() => {
+    setHistoryCounts({
+      undo: undoStackRef.current.length,
+      redo: redoStackRef.current.length,
+    });
+  }, []);
+
+  const resetHistory = useCallback(() => {
+    undoStackRef.current = [];
+    redoStackRef.current = [];
+    syncHistoryCounts();
+  }, [syncHistoryCounts]);
+
+  const pushUndoSnapshot = useCallback(() => {
+    undoStackRef.current = [
+      ...undoStackRef.current.slice(-39),
+      {
+        meta: metaRef.current,
+        subjects: subjectsRef.current,
+        templateId: templateIdRef.current,
+      },
+    ];
+    redoStackRef.current = [];
+    syncHistoryCounts();
+  }, [syncHistoryCounts]);
+
+  const updateSubjectsWithHistory = useCallback(
+    (next: React.SetStateAction<SubjectEntry[]>) => {
+      pushUndoSnapshot();
+      setSubjects(next);
+    },
+    [pushUndoSnapshot]
+  );
+
+  const handleUndo = useCallback(() => {
+    const prev = undoStackRef.current.pop();
+    if (!prev) return;
+    redoStackRef.current.push({
+      meta: metaRef.current,
+      subjects: subjectsRef.current,
+      templateId: templateIdRef.current,
+    });
+    setMeta(prev.meta);
+    setSubjects(prev.subjects);
+    setTemplateId(prev.templateId);
+    syncHistoryCounts();
+    showToast('Undid last change');
+  }, [showToast, syncHistoryCounts]);
+
+  const handleRedo = useCallback(() => {
+    const next = redoStackRef.current.pop();
+    if (!next) return;
+    undoStackRef.current.push({
+      meta: metaRef.current,
+      subjects: subjectsRef.current,
+      templateId: templateIdRef.current,
+    });
+    setMeta(next.meta);
+    setSubjects(next.subjects);
+    setTemplateId(next.templateId);
+    syncHistoryCounts();
+    showToast('Redid change');
+  }, [showToast, syncHistoryCounts]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (viewModeRef.current !== 'studio') return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const key = e.key.toLowerCase();
+      if (key === 'z' && !e.shiftKey) {
+        if (undoStackRef.current.length > 0) {
+          e.preventDefault();
+          handleUndo();
+        }
+      } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+        if (redoStackRef.current.length > 0) {
+          e.preventDefault();
+          handleRedo();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [handleRedo, handleUndo]);
+
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setExportMenuOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', onPointerDown);
+    return () => window.removeEventListener('mousedown', onPointerDown);
+  }, [exportMenuOpen]);
 
   useEffect(() => {
     hasDraftSubjectsRef.current = subjects.length > 0;
@@ -153,13 +286,6 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   useEffect(() => {
     viewModeRef.current = viewMode;
   }, [viewMode]);
-
-  const showToast = useCallback((text: string, type: 'ok' | 'err' = 'ok') => {
-    setToast({ text, type });
-    setTimeout(() => {
-      setToast((curr) => (curr?.text === text ? null : curr));
-    }, 3200);
-  }, []);
 
   const fetchSavedList = useCallback(
     async (uid: string) => {
@@ -264,7 +390,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     return () => unsub();
   }, [fetchSavedList, initialRecord, showToast]);
 
-  // Support ?load=<shareId> from Share page "Remix in Studio"
+  // Support ?load=<shareId> from Share page "Use as Template"
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const loadId = params.get('load');
@@ -278,19 +404,22 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
               setTemplateId(rec.templateId);
               setSavedId(null);
               setShareId(null);
+              resetHistory();
+              window.history.replaceState({}, '', '/');
               if (auth.currentUser) {
                 setViewMode('studio');
                 setActiveNav('timetable');
-                showToast(`Loaded "${rec.meta.title || 'Timetable'}" into Studio`);
+                showToast(`Cloned "${rec.meta.title || 'Timetable'}" into your Studio`);
               } else {
                 setViewMode('login-gate');
+                showToast(`Cloned "${rec.meta.title || 'Timetable'}" — sign in to customize`);
               }
             }
           })
           .catch(() => { })
       );
     }
-  }, [showToast]);
+  }, [resetHistory, showToast]);
 
   const schedule = useMemo(() => analyzeSchedule(subjects, meta), [subjects, meta]);
   const activeTemplate = useMemo(() => getPresetTemplate(templateId), [templateId]);
@@ -338,6 +467,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
       ...(payload.meta.subtitle !== undefined ? { subtitle: payload.meta.subtitle } : {}),
       ...(payload.meta.timeFormat ? { timeFormat: payload.meta.timeFormat } : {}),
     };
+    pushUndoSnapshot();
     setMeta(nextMeta);
     setSubjects(payload.subjects);
     setSavedId(null);
@@ -393,7 +523,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
       };
     });
 
-    setSubjects(updatedSubjects);
+    updateSubjectsWithHistory(updatedSubjects);
     setEditingBlock(null);
 
     const check = analyzeSchedule(updatedSubjects, meta);
@@ -406,7 +536,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
 
   const deleteOccurrenceFromBlock = () => {
     if (!editingBlock) return;
-    setSubjects((prev) =>
+    updateSubjectsWithHistory((prev) =>
       prev
         .map((subj) => {
           if (subj.id !== editingBlock.subjectId) return subj;
@@ -681,6 +811,39 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     }
   };
 
+  const handleExportWallpaper = async (format: WallpaperFormat) => {
+    if (subjects.length === 0) {
+      showToast('Add subjects before exporting wallpaper.', 'err');
+      return;
+    }
+    const targetNode = isDailyTemplate
+      ? dailyExportRefs.current[activeDailyDay] ?? canvasRef.current
+      : canvasRef.current;
+    if (!targetNode) {
+      showToast('Switch to Timetable view to export wallpaper.', 'err');
+      return;
+    }
+    setExportingWallpaper(format);
+    try {
+      await exportTimetableWallpaper({
+        node: targetNode,
+        template: activeTemplate,
+        title: meta.title,
+        format,
+        dayLabel: isDailyTemplate ? activeDailyDay : undefined,
+      });
+      showToast(
+        format === 'lockscreen'
+          ? 'Downloaded 9:16 Phone Lockscreen (1080×1920)!'
+          : 'Downloaded 16:9 Desktop Wallpaper (1920×1080)!'
+      );
+    } catch {
+      showToast('Wallpaper export failed. Please try again.', 'err');
+    } finally {
+      setExportingWallpaper(null);
+    }
+  };
+
   const handleExportIcs = () => {
     if (subjects.length === 0) {
       showToast('No sessions to export.', 'err');
@@ -769,9 +932,23 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#09090B]">
-        <GridWiseLogoMark size={38} tone="dark" />
-        <span className="font-mono text-xs text-zinc-500">Loading workspace...</span>
+      <div className="relative flex min-h-screen flex-col items-center justify-center gap-4 overflow-hidden bg-[#050812]">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(50% 45% at 50% 50%, rgba(37, 99, 235, 0.16) 0%, rgba(5, 8, 18, 0) 75%)',
+          }}
+        />
+        <div className="relative flex flex-col items-center gap-3.5">
+          <div className="rounded-2xl border border-white/10 bg-[#0A1020]/80 p-3 shadow-[0_0_40px_rgba(59,130,246,0.18)]">
+            <GridWiseLogoMark size={44} tone="dark" animated />
+          </div>
+          <span className="font-mono text-xs tracking-wide text-zinc-400">
+            Loading workspace...
+          </span>
+        </div>
       </div>
     );
   }
@@ -1108,6 +1285,29 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                 </div>
 
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:gap-2 lg:overflow-visible lg:pb-0">
+                  <div className="flex items-center rounded-lg border border-[#222229] bg-[#121215] p-0.5">
+                    <button
+                      type="button"
+                      disabled={historyCounts.undo === 0}
+                      onClick={handleUndo}
+                      title="Undo (Ctrl+Z)"
+                      aria-label="Undo"
+                      className="rounded-md p-1.5 text-zinc-300 transition hover:bg-[#1E1E26] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                      <Undo2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={historyCounts.redo === 0}
+                      onClick={handleRedo}
+                      title="Redo (Ctrl+Y)"
+                      aria-label="Redo"
+                      className="rounded-md p-1.5 text-zinc-300 transition hover:bg-[#1E1E26] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                      <Redo2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
                   <AiImportButton
                     onClick={() => setAiImportOpen(true)}
                     compact
@@ -1252,7 +1452,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                       <SubjectEntryBuilder
                         subjects={subjects}
                         timeFormat={meta.timeFormat}
-                        onChangeSubjects={setSubjects}
+                        onChangeSubjects={updateSubjectsWithHistory}
                       />
                     </motion.div>
                   )}
@@ -1373,8 +1573,8 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                       transition={TRANSITION_VIEW}
                       className="mx-auto max-w-[1380px] space-y-4"
                     >
-                      <div className="no-print flex flex-col gap-2.5 rounded-xl border border-[#202026] bg-[#121215] px-3.5 py-2.5 md:flex-row md:items-center md:justify-between">
-                        <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto pb-0.5 md:pb-0">
+                      <div className="no-print flex flex-col gap-2.5 rounded-xl border border-[#202026] bg-[#121215] px-3.5 py-2 md:flex-row md:items-center md:justify-between md:gap-3">
+                        <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
                           <span className="mr-1 shrink-0 text-[11px] text-zinc-500">Preset:</span>
                           {PRESET_TEMPLATES.map((tpl) => {
                             const active = tpl.id === templateId;
@@ -1401,53 +1601,154 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                           })}
                         </div>
 
-                        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                        <div
+                          className="flex shrink-0 items-center gap-1.5 md:border-l md:border-[#24242C] md:pl-3"
+                          ref={exportMenuRef}
+                        >
                           <button
                             type="button"
                             onClick={handleExportPng}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272F] bg-[#0B0B0D] px-2.5 py-1.5 text-[11px] font-medium text-zinc-200 hover:border-zinc-500"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272F] bg-[#0B0B0D] px-3 py-1.5 text-[11px] font-medium text-zinc-200 hover:border-zinc-500"
                           >
                             <Download className="h-3.5 w-3.5" />
                             {isDailyTemplate ? `${activeDailyDay} PNG` : 'PNG'}
                           </button>
-                          {isDailyTemplate && (
+
+                          <div className="relative">
                             <button
                               type="button"
-                              disabled={exportingAllDays}
-                              onClick={handleExportAllDaysPng}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#09090B] transition hover:bg-zinc-200 disabled:opacity-60"
+                              onClick={() => setExportMenuOpen((prev) => !prev)}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-[11px] font-semibold text-[#09090B] transition hover:bg-zinc-200"
                             >
-                              <Download className="h-3.5 w-3.5" />
-                              {exportingAllDays
-                                ? 'Zipping Days...'
-                                : `All ${schedule.days.length} Days (.ZIP)`}
+                              Export
+                              <ChevronDown
+                                className={`h-3.5 w-3.5 transition-transform ${
+                                  exportMenuOpen ? 'rotate-180' : ''
+                                }`}
+                              />
                             </button>
-                          )}
-                          <button
-                            type="button"
-                            disabled={exportingPdf}
-                            onClick={handleExportPdf}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272F] bg-[#0B0B0D] px-2.5 py-1.5 text-[11px] font-medium text-zinc-200 transition hover:border-zinc-500 disabled:opacity-60"
-                          >
-                            <Printer className="h-3.5 w-3.5" />
-                            {exportingPdf ? 'Exporting PDF...' : 'PDF'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleExportIcs}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272F] bg-[#0B0B0D] px-2.5 py-1.5 text-[11px] font-medium text-zinc-200 hover:border-zinc-500"
-                          >
-                            <CalendarPlus className="h-3.5 w-3.5" />
-                            .ICS
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleExportJson}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272F] bg-[#0B0B0D] px-2.5 py-1.5 text-[11px] font-medium text-zinc-200 hover:border-zinc-500"
-                          >
-                            <FileJson className="h-3.5 w-3.5" />
-                            JSON
-                          </button>
+
+                            {exportMenuOpen && (
+                              <div className="absolute right-0 z-40 mt-2 w-60 rounded-xl border border-[#27272F] bg-[#0D0E12] p-1.5 shadow-2xl">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setExportMenuOpen(false);
+                                    void handleExportPng();
+                                  }}
+                                  className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22]"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <Download className="h-3.5 w-3.5 text-zinc-400" />
+                                    {isDailyTemplate ? `${activeDailyDay} Image` : '2× Retina Image'}
+                                  </span>
+                                  <span className="font-mono text-[10px] text-zinc-500">PNG</span>
+                                </button>
+                                {isDailyTemplate && (
+                                  <button
+                                    type="button"
+                                    disabled={exportingAllDays}
+                                    onClick={() => {
+                                      setExportMenuOpen(false);
+                                      void handleExportAllDaysPng();
+                                    }}
+                                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22] disabled:opacity-50"
+                                  >
+                                    <span className="flex items-center gap-2">
+                                      <Download className="h-3.5 w-3.5 text-zinc-400" />
+                                      {exportingAllDays
+                                        ? 'Zipping Days...'
+                                        : `All ${schedule.days.length} Days`}
+                                    </span>
+                                    <span className="font-mono text-[10px] text-zinc-500">.ZIP</span>
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  disabled={exportingPdf}
+                                  onClick={() => {
+                                    setExportMenuOpen(false);
+                                    void handleExportPdf();
+                                  }}
+                                  className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22] disabled:opacity-50"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <Printer className="h-3.5 w-3.5 text-zinc-400" />
+                                    {exportingPdf ? 'Exporting PDF...' : 'Print-Ready'}
+                                  </span>
+                                  <span className="font-mono text-[10px] text-zinc-500">PDF</span>
+                                </button>
+
+                                <div className="my-1 border-t border-[#1E1F27]" />
+
+                                <button
+                                  type="button"
+                                  disabled={exportingWallpaper !== null}
+                                  onClick={() => {
+                                    setExportMenuOpen(false);
+                                    void handleExportWallpaper('lockscreen');
+                                  }}
+                                  className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22] disabled:opacity-50"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <Smartphone className="h-3.5 w-3.5 text-blue-400" />
+                                    {exportingWallpaper === 'lockscreen'
+                                      ? 'Rendering...'
+                                      : 'Phone Lockscreen'}
+                                  </span>
+                                  <span className="font-mono text-[10px] text-zinc-500">9:16</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={exportingWallpaper !== null}
+                                  onClick={() => {
+                                    setExportMenuOpen(false);
+                                    void handleExportWallpaper('desktop');
+                                  }}
+                                  className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22] disabled:opacity-50"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <Monitor className="h-3.5 w-3.5 text-blue-400" />
+                                    {exportingWallpaper === 'desktop'
+                                      ? 'Rendering...'
+                                      : 'Desktop Wallpaper'}
+                                  </span>
+                                  <span className="font-mono text-[10px] text-zinc-500">16:9</span>
+                                </button>
+
+                                <div className="my-1 border-t border-[#1E1F27]" />
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setExportMenuOpen(false);
+                                    handleExportIcs();
+                                  }}
+                                  className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22]"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <CalendarPlus className="h-3.5 w-3.5 text-zinc-400" />
+                                    Calendar Feed
+                                  </span>
+                                  <span className="font-mono text-[10px] text-zinc-500">.ICS</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setExportMenuOpen(false);
+                                    handleExportJson();
+                                  }}
+                                  className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22]"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <FileJson className="h-3.5 w-3.5 text-zinc-400" />
+                                    Schedule Backup
+                                  </span>
+                                  <span className="font-mono text-[10px] text-zinc-500">JSON</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -1825,7 +2126,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
         timeFormat={meta.timeFormat}
         onClose={() => setOverlapAlertOpen(false)}
         onMergeConflict={(ids) => {
-          setSubjects((prev) => markOccurrencesAsMerged(prev, ids));
+          updateSubjectsWithHistory((prev) => markOccurrencesAsMerged(prev, ids));
           showToast('Merged overlapping subjects into one slot.');
           if (schedule.unresolvedOverlaps.length <= 1) {
             setOverlapAlertOpen(false);
@@ -1835,7 +2136,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
           const allIds = schedule.unresolvedOverlaps.flatMap((c) =>
             c.blocks.map((b) => b.occurrenceId)
           );
-          setSubjects((prev) => markOccurrencesAsMerged(prev, allIds));
+          updateSubjectsWithHistory((prev) => markOccurrencesAsMerged(prev, allIds));
           setOverlapAlertOpen(false);
           showToast('Merged all overlapping slots.');
         }}
@@ -1871,6 +2172,12 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
           ))}
         </div>
       )}
+
+      {/* Google One Tap for signed-out visitors */}
+      <GoogleOneTap
+        disabled={authLoading || Boolean(user) || viewMode === 'login-gate'}
+        onError={(err) => showToast(formatFirebaseAuthError(err).message, 'err')}
+      />
 
       {/* Share Settings Modal */}
       <AnimatedModalShell
