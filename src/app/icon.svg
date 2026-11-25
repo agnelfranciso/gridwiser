@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#09090B" />
+  <rect x="0.75" y="0.75" width="30.5" height="30.5" rx="7.25" stroke="#27272F" stroke-width="1.5" />
+  <!-- Top-left tall schedule block -->
+  <rect x="6.5" y="6.5" width="7.5" height="11" rx="2" fill="#FAFAFA" />
+  <!-- Top-right wide schedule block -->
+  <rect x="16" y="6.5" width="9.5" height="6" rx="2" fill="#60A5FA" />
+  <!-- Middle-right compact slot -->
+  <rect x="16" y="14.5" width="9.5" height="3" rx="1.5" fill="#52525B" />
+  <!-- Bottom-left slot -->
+  <rect x="6.5" y="19.5" width="7.5" height="6" rx="2" fill="#52525B" />
+  <!-- Bottom-right bento block -->
+  <rect x="16" y="19.5" width="9.5" height="6" rx="2" fill="#FAFAFA" fill-opacity="0.88" />
+</svg>
