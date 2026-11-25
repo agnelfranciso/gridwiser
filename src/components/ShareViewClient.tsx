@@ -74,7 +74,7 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
   const handleExportPng = async () => {
     if (!canvasRef.current) return;
     const dataUrl = await toPng(canvasRef.current, {
-      pixelRatio: 2,
+      pixelRatio: 3,
       backgroundColor: template.tokens.canvasBg,
     });
     const link = document.createElement('a');
@@ -95,7 +95,7 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
         const node = dailyExportRefs.current[day];
         if (!node) continue;
         const dataUrl = await toPng(node, {
-          pixelRatio: 2,
+          pixelRatio: 3,
           backgroundColor: template.tokens.canvasBg,
         });
         const base64 = dataUrl.split(',')[1];
@@ -145,10 +145,10 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
       let pdf: InstanceType<typeof jsPDF> | null = null;
 
       for (const node of nodes) {
-        const dataUrl = await toPng(node, { pixelRatio: 2, backgroundColor: bgHex });
+        const dataUrl = await toPng(node, { pixelRatio: 3, backgroundColor: bgHex });
         const img = await loadImage(dataUrl);
-        const w = Math.round(img.naturalWidth / 2);
-        const h = Math.round(img.naturalHeight / 2);
+        const w = Math.round(img.naturalWidth / 3);
+        const h = Math.round(img.naturalHeight / 3);
         const pageW = w + pad * 2;
         const pageH = h + pad * 2;
         const orientation = pageW >= pageH ? 'landscape' : 'portrait';
@@ -270,7 +270,7 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
               </button>
 
               {exportMenuOpen && (
-                <div className="absolute right-0 z-40 mt-2 w-60 max-w-[calc(100vw-1rem)] rounded-xl border border-[#27272F] bg-[#0D0E12] p-1.5 shadow-2xl">
+                <div className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-2.5rem)] rounded-xl border border-[#27272F] bg-[#0D0E12] p-1.5 shadow-2xl">
                   <button
                     type="button"
                     onClick={() => {
@@ -281,7 +281,7 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
                   >
                     <span className="flex items-center gap-2">
                       <Download className="h-3.5 w-3.5 text-zinc-400" />
-                      {isDailyTemplate ? `${activeDay} Image` : '2× Retina Image'}
+                      {isDailyTemplate ? `${activeDay} Image` : '3× Ultra Retina'}
                     </span>
                     <span className="font-mono text-[10px] text-zinc-500">PNG</span>
                   </button>

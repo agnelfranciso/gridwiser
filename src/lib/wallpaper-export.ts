@@ -64,7 +64,7 @@ export async function exportTimetableWallpaper(options: {
   const targetH = format === 'lockscreen' ? 1920 : 1080;
 
   const dataUrl = await toPng(node, {
-    pixelRatio: 2,
+    pixelRatio: 3,
     backgroundColor: template.tokens.canvasBg,
   });
   const img = await loadImage(dataUrl);
@@ -76,6 +76,9 @@ export async function exportTimetableWallpaper(options: {
   if (!ctx) {
     throw new Error('Could not initialize wallpaper canvas.');
   }
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
   // Base background
   ctx.fillStyle = template.tokens.canvasBg;

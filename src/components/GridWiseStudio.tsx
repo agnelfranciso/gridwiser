@@ -32,6 +32,8 @@ import {
   Globe,
   Copy,
   ChevronDown,
+  User as UserIcon,
+  Loader2,
 } from 'lucide-react';
 import {
   ALL_DAYS,
@@ -138,11 +140,16 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   const [activeDailyDay, setActiveDailyDay] = useState<DayOfWeek>('Mon');
   const [exportingAllDays, setExportingAllDays] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingPng, setExportingPng] = useState(false);
   const [exportingWallpaper, setExportingWallpaper] = useState<WallpaperFormat | null>(null);
+  const [exportProgressText, setExportProgressText] = useState<string | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const [mobileNoticeOpen, setMobileNoticeOpen] = useState(false);
   const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [historyCounts, setHistoryCounts] = useState({ undo: 0, redo: 0 });
   const canvasRef = useRef<HTMLDivElement | null>(null);
@@ -277,6 +284,17 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     window.addEventListener('mousedown', onPointerDown);
     return () => window.removeEventListener('mousedown', onPointerDown);
   }, [exportMenuOpen]);
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', onPointerDown);
+    return () => window.removeEventListener('mousedown', onPointerDown);
+  }, [userMenuOpen]);
 
   useEffect(() => {
     hasDraftSubjectsRef.current = subjects.length > 0;
@@ -659,18 +677,23 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
       showToast('Switch to Timetable view to export PNG.', 'err');
       return;
     }
+    setExportingPng(true);
+    setExportProgressText('Rendering high-res 3× PNG...');
     try {
       const dataUrl = await toPng(canvasRef.current, {
-        pixelRatio: 2,
+        pixelRatio: 3,
         backgroundColor: activeTemplate.tokens.canvasBg,
       });
       const link = document.createElement('a');
       link.download = `${(meta.title || 'gridwiser-timetable').toLowerCase().replace(/\s+/g, '-')}.png`;
       link.href = dataUrl;
       link.click();
-      showToast('Exported high-resolution PNG.');
+      showToast('Exported ultra-clear 3× PNG.');
     } catch {
       showToast('PNG export failed. Try Print / PDF.', 'err');
+    } finally {
+      setExportingPng(false);
+      setExportProgressText(null);
     }
   };
 
@@ -691,10 +714,11 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
       let exported = 0;
       for (let i = 0; i < schedule.days.length; i += 1) {
         const day = schedule.days[i];
+        setExportProgressText(`Rendering ${day} (${i + 1}/${schedule.days.length})...`);
         const node = dailyExportRefs.current[day];
         if (!node) continue;
         const dataUrl = await toPng(node, {
-          pixelRatio: 2,
+          pixelRatio: 3,
           backgroundColor: activeTemplate.tokens.canvasBg,
         });
         const base64 = dataUrl.split(',')[1];
@@ -709,6 +733,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
         return;
       }
 
+      setExportProgressText('Generating ZIP archive...');
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(zipBlob);
       const link = document.createElement('a');
@@ -721,6 +746,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
       showToast('ZIP export failed. Try exporting single days.', 'err');
     } finally {
       setExportingAllDays(false);
+      setExportProgressText(null);
     }
   };
 
@@ -735,6 +761,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     }
 
     setExportingPdf(true);
+    setExportProgressText('Compiling crisp PDF document...');
     try {
       const { jsPDF } = await import('jspdf');
       const baseSlug =
@@ -769,13 +796,14 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
       const pad = 24;
 
       for (let i = 0; i < nodes.length; i += 1) {
+        setExportProgressText(`Rendering page ${i + 1} of ${nodes.length}...`);
         const dataUrl = await toPng(nodes[i], {
-          pixelRatio: 2,
+          pixelRatio: 3,
           backgroundColor: bgHex,
         });
         const img = await loadImage(dataUrl);
-        const w = Math.round(img.naturalWidth / 2);
-        const h = Math.round(img.naturalHeight / 2);
+        const w = Math.round(img.naturalWidth / 3);
+        const h = Math.round(img.naturalHeight / 3);
         const pageW = w + pad * 2;
         const pageH = h + pad * 2;
         const orientation = pageW >= pageH ? 'landscape' : 'portrait';
@@ -808,6 +836,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
       showToast('PDF export failed. Please try again.', 'err');
     } finally {
       setExportingPdf(false);
+      setExportProgressText(null);
     }
   };
 
@@ -824,6 +853,11 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
       return;
     }
     setExportingWallpaper(format);
+    setExportProgressText(
+      format === 'lockscreen'
+        ? 'Rendering 1080×1920 Lockscreen wallpaper...'
+        : 'Rendering 1920×1080 Desktop wallpaper...'
+    );
     try {
       await exportTimetableWallpaper({
         node: targetNode,
@@ -841,6 +875,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
       showToast('Wallpaper export failed. Please try again.', 'err');
     } finally {
       setExportingWallpaper(null);
+      setExportProgressText(null);
     }
   };
 
@@ -1140,7 +1175,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                     </button>
                     <button
                       type="button"
-                      onClick={handleClearAll}
+                      onClick={() => setClearConfirmOpen(true)}
                       className="inline-flex items-center justify-center gap-1 rounded-lg border border-[#25252D] bg-[#0B0B0D] px-2 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200"
                     >
                       <RotateCcw className="h-3 w-3" />
@@ -1239,12 +1274,12 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                       New Setup
                     </button>
                     {user ? (
-                      <>
+                      <div className="relative" ref={userMenuRef}>
                         <button
                           type="button"
-                          onClick={() => router.push('/account')}
-                          className="overflow-hidden rounded-full border border-white/15"
-                          title="Account Settings"
+                          onClick={() => setUserMenuOpen((prev) => !prev)}
+                          className="flex overflow-hidden rounded-full border border-white/20 transition hover:border-white/50 focus:outline-none"
+                          title="Account menu"
                         >
                           {user.photoURL ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -1260,15 +1295,44 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                             </span>
                           )}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setSignOutConfirmOpen(true)}
-                          className="rounded-lg border border-[#25252D] bg-[#131317] p-1.5 text-zinc-300"
-                          title="Sign Out"
-                        >
-                          <LogOut className="h-3.5 w-3.5" />
-                        </button>
-                      </>
+
+                        {userMenuOpen && (
+                          <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-[#27272F] bg-[#0E0F14] p-1.5 shadow-2xl backdrop-blur-xl">
+                            <div className="border-b border-[#1E1F27] px-3 py-2">
+                              <p className="truncate text-xs font-semibold text-white">
+                                {user.displayName ?? 'User'}
+                              </p>
+                              <p className="truncate text-[10px] text-zinc-500">
+                                {user.email}
+                              </p>
+                            </div>
+                            <div className="pt-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setUserMenuOpen(false);
+                                  router.push('/account');
+                                }}
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-zinc-200 transition hover:bg-[#1C1D26]"
+                              >
+                                <UserIcon className="h-3.5 w-3.5 text-blue-400" />
+                                Open Profile
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setUserMenuOpen(false);
+                                  setSignOutConfirmOpen(true);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-rose-400 transition hover:bg-rose-500/10"
+                              >
+                                <LogOut className="h-3.5 w-3.5" />
+                                Sign Out
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <button
                         type="button"
@@ -1607,11 +1671,20 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                         >
                           <button
                             type="button"
+                            disabled={exportingPng}
                             onClick={handleExportPng}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272F] bg-[#0B0B0D] px-3 py-1.5 text-[11px] font-medium text-zinc-200 hover:border-zinc-500"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272F] bg-[#0B0B0D] px-3 py-1.5 text-[11px] font-medium text-zinc-200 transition hover:border-zinc-500 disabled:opacity-60"
                           >
-                            <Download className="h-3.5 w-3.5" />
-                            {isDailyTemplate ? `${activeDailyDay} PNG` : 'PNG'}
+                            {exportingPng ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-400" />
+                            ) : (
+                              <Download className="h-3.5 w-3.5" />
+                            )}
+                            {exportingPng
+                              ? 'Rendering...'
+                              : isDailyTemplate
+                                ? `${activeDailyDay} PNG`
+                                : '3× PNG'}
                           </button>
 
                           <div className="relative">
@@ -1629,18 +1702,19 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                             </button>
 
                             {exportMenuOpen && (
-                              <div className="absolute right-0 z-40 mt-2 w-60 max-w-[calc(100vw-1rem)] rounded-xl border border-[#27272F] bg-[#0D0E12] p-1.5 shadow-2xl">
+                              <div className="absolute left-0 top-full z-40 mt-2 w-64 max-w-[calc(100vw-2.5rem)] rounded-xl border border-[#27272F] bg-[#0D0E12] p-1.5 shadow-2xl md:left-auto md:right-0">
                                 <button
                                   type="button"
+                                  disabled={exportingPng}
                                   onClick={() => {
                                     setExportMenuOpen(false);
                                     void handleExportPng();
                                   }}
-                                  className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22]"
+                                  className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs text-zinc-200 hover:bg-[#191A22] disabled:opacity-50"
                                 >
                                   <span className="flex items-center gap-2">
                                     <Download className="h-3.5 w-3.5 text-zinc-400" />
-                                    {isDailyTemplate ? `${activeDailyDay} Image` : '2× Retina Image'}
+                                    {isDailyTemplate ? `${activeDailyDay} Image` : '3× Ultra Retina'}
                                   </span>
                                   <span className="font-mono text-[10px] text-zinc-500">PNG</span>
                                 </button>
@@ -2312,6 +2386,45 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
         </div>
       </AnimatedModalShell>
 
+      {/* Clear Schedule Confirmation Modal */}
+      <AnimatedModalShell
+        open={clearConfirmOpen}
+        onClose={() => setClearConfirmOpen(false)}
+        zIndexClass="z-50"
+      >
+        <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 bg-[#080B12] p-6 shadow-2xl">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-400">
+            <RotateCcw className="h-5 w-5" />
+          </div>
+          <h3 className="mt-4 text-base font-semibold text-white">
+            Reset current timetable?
+          </h3>
+          <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+            This will clear all current subjects and start a blank schedule. If you saved this schedule previously, your saved copy remains safe in your account.
+          </p>
+          <div className="mt-5 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setClearConfirmOpen(false)}
+              className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-zinc-300 transition hover:bg-white/[0.08] hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setClearConfirmOpen(false);
+                handleClearAll();
+                showToast('Schedule reset to empty state.');
+              }}
+              className="rounded-xl bg-rose-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-600"
+            >
+              Reset Schedule
+            </button>
+          </div>
+        </div>
+      </AnimatedModalShell>
+
       {/* Mobile Desktop-Recommended Notice (shown when logged in on mobile) */}
       <AnimatedModalShell
         open={mobileNoticeOpen}
@@ -2346,6 +2459,19 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
 
       {/* Toast */}
       <AnimatePresence>
+        {exportProgressText && (
+          <motion.div
+            key="export-progress"
+            initial={{ opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            transition={SPRING_PILL}
+            className="no-print fixed bottom-28 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2.5 rounded-full border border-blue-500/30 bg-[#0E1528]/95 px-4 py-2 text-xs font-medium text-blue-200 shadow-[0_0_30px_rgba(59,130,246,0.25)] backdrop-blur-xl lg:bottom-16"
+          >
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-400" />
+            <span>{exportProgressText}</span>
+          </motion.div>
+        )}
         {toast && (
           <motion.div
             key={toast.text}
