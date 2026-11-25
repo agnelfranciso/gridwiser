@@ -266,11 +266,10 @@ export function SharedTemplateViewClient({
           </button>
           <Link
             href="/theme-creator"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-1.5 text-xs font-semibold text-[#09090B] transition hover:bg-zinc-200"
+            className="hidden items-center gap-1.5 rounded-lg bg-white px-3.5 py-1.5 text-xs font-semibold text-[#09090B] transition hover:bg-zinc-200 lg:inline-flex"
           >
             <Sliders className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Customize or Remix</span>
-            <span className="sm:hidden">Remix</span>
+            <span>Customize or Remix</span>
           </Link>
         </div>
       </header>

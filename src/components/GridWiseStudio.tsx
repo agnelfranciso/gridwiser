@@ -1583,7 +1583,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                         <div className="flex items-center gap-2">
                           <Link
                             href="/theme-creator"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3.5 py-2 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20"
+                            className="hidden items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3.5 py-2 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20 lg:inline-flex"
                           >
                             <Palette className="h-3.5 w-3.5" />
                             Create Your Template
