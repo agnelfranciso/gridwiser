@@ -9,6 +9,7 @@ import {
   serverTimestamp,
   setDoc,
   Timestamp,
+  updateDoc,
 } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
 import { db } from '@/lib/firebase';
@@ -79,6 +80,10 @@ export async function listUserTimetables(
       templateName: tpl.name,
       canvasBg: tpl.tokens.canvasBg,
       accent: tpl.tokens.accent,
+      shareId:
+        typeof data.shareId === 'string' && data.shareId.length >= 10
+          ? data.shareId
+          : null,
       updatedAt: toIsoString(data.updatedAt),
     };
   });
@@ -249,6 +254,22 @@ export async function publishSharedTimetable(
   });
 
   return shareId;
+}
+
+export async function unpublishSharedTimetable(
+  uid: string,
+  timetableId: string | null,
+  shareId: string
+): Promise<void> {
+  if (shareId && shareId.length >= 10) {
+    await deleteDoc(doc(db, 'shared_timetables', shareId));
+  }
+  if (timetableId) {
+    await updateDoc(doc(db, 'users', uid, 'timetables', timetableId), {
+      shareId: null,
+      updatedAt: serverTimestamp(),
+    });
+  }
 }
 
 export async function getSharedTimetable(

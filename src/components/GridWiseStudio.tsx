@@ -25,6 +25,9 @@ import {
   LogOut,
   LogIn,
   Monitor,
+  Lock,
+  Globe,
+  Copy,
 } from 'lucide-react';
 import {
   ALL_DAYS,
@@ -43,6 +46,7 @@ import {
   listUserTimetables,
   publishSharedTimetable,
   saveUserTimetable,
+  unpublishSharedTimetable,
   upsertUserProfile,
 } from '@/lib/firestore-timetables';
 import { getPresetTemplate, PRESET_TEMPLATES } from '@/lib/themes';
@@ -127,6 +131,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [mobileNoticeOpen, setMobileNoticeOpen] = useState(false);
   const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const dailyExportRefs = useRef<Partial<Record<DayOfWeek, HTMLDivElement | null>>>({});
   const hasDraftSubjectsRef = useRef<boolean>(subjects.length > 0);
@@ -487,8 +492,33 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
         document.body.removeChild(ta);
         showToast('Shareable link copied!');
       }
+      setShareModalOpen(true);
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Share failed', 'err');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleMakePrivate = async (
+    targetTimetableId: string | null = savedId,
+    targetShareId: string | null = shareId
+  ) => {
+    if (!user || !targetShareId) return;
+    setIsSaving(true);
+    try {
+      await unpublishSharedTimetable(user.uid, targetTimetableId, targetShareId);
+      if (targetShareId === shareId) {
+        setShareId(null);
+      }
+      setShareModalOpen(false);
+      fetchSavedList(user.uid);
+      showToast('Share link revoked — timetable is now private.');
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to make timetable private',
+        'err'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -1121,11 +1151,30 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                   <button
                     type="button"
                     disabled={isSaving}
-                    onClick={handleShareTimetable}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#25252D] bg-[#131317] px-3 py-1.5 text-xs font-medium text-zinc-200 hover:border-zinc-500 disabled:opacity-50"
+                    onClick={() => {
+                      if (shareId) {
+                        setShareModalOpen(true);
+                      } else {
+                        void handleShareTimetable();
+                      }
+                    }}
+                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
+                      shareId
+                        ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400/50'
+                        : 'border-[#25252D] bg-[#131317] text-zinc-200 hover:border-zinc-500'
+                    }`}
                   >
-                    <Share2 className="h-3.5 w-3.5" />
-                    Share
+                    {shareId ? (
+                      <>
+                        <Globe className="h-3.5 w-3.5" />
+                        Shared
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-3.5 w-3.5" />
+                        Share
+                      </>
+                    )}
                   </button>
 
                   {activeNav !== 'timetable' && (
@@ -1560,16 +1609,27 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                                   Open in Studio
                                 </button>
                                 <div className="flex items-center gap-1.5">
-                                  {shareId && savedId === item.id && (
-                                    <a
-                                      href={`/share/${shareId}`}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="rounded-lg border border-[#25252D] p-1.5 text-zinc-400 hover:border-zinc-500 hover:text-white"
-                                      title="Open share view"
-                                    >
-                                      <ExternalLink className="h-3.5 w-3.5" />
-                                    </a>
+                                  {item.shareId && (
+                                    <>
+                                      <a
+                                        href={`/share/${item.shareId}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-1.5 text-emerald-300 hover:border-emerald-400/60"
+                                        title="Open public share link"
+                                      >
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                      </a>
+                                      <button
+                                        type="button"
+                                        disabled={isSaving}
+                                        onClick={() => handleMakePrivate(item.id, item.shareId ?? null)}
+                                        className="rounded-lg border border-[#25252D] p-1.5 text-zinc-400 hover:border-amber-400/50 hover:text-amber-300 disabled:opacity-50"
+                                        title="Make private (revoke share link)"
+                                      >
+                                        <Lock className="h-3.5 w-3.5" />
+                                      </button>
+                                    </>
                                   )}
                                   <button
                                     type="button"
@@ -1811,6 +1871,101 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
           ))}
         </div>
       )}
+
+      {/* Share Settings Modal */}
+      <AnimatedModalShell
+        open={shareModalOpen && Boolean(shareId)}
+        onClose={() => setShareModalOpen(false)}
+        zIndexClass="z-50"
+      >
+        <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/15 bg-[#080B12] p-6 shadow-2xl">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-300">
+                <Globe className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">
+                  Public Share Link
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Anyone with this link can view a read-only copy.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShareModalOpen(false)}
+              className="rounded-lg p-1 text-zinc-400 hover:bg-white/5 hover:text-white"
+              aria-label="Close share settings"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#1E2430] bg-[#0B0E16] p-2">
+            <input
+              type="text"
+              readOnly
+              value={
+                typeof window !== 'undefined' && shareId
+                  ? `${window.location.origin}/share/${shareId}`
+                  : shareId
+                  ? `/share/${shareId}`
+                  : ''
+              }
+              className="min-w-0 flex-1 bg-transparent px-2 font-mono text-xs text-zinc-200 outline-none"
+            />
+            <button
+              type="button"
+              onClick={async () => {
+                if (!shareId || typeof window === 'undefined') return;
+                const url = `${window.location.origin}/share/${shareId}`;
+                await navigator.clipboard?.writeText(url).catch(() => {});
+                showToast('Shareable link copied!');
+              }}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#050811] transition hover:bg-zinc-200"
+            >
+              <Copy className="h-3.5 w-3.5" />
+              Copy
+            </button>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-4">
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => handleMakePrivate(savedId, shareId)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2 text-xs font-medium text-rose-300 transition hover:bg-rose-500/20 disabled:opacity-50"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Make Private
+            </button>
+
+            <div className="flex items-center gap-2">
+              {shareId && (
+                <a
+                  href={`/share/${shareId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2 text-xs font-medium text-zinc-200 transition hover:bg-white/[0.08]"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Open
+                </a>
+              )}
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={handleShareTimetable}
+                className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2 text-xs font-medium text-zinc-200 transition hover:bg-white/[0.08] disabled:opacity-50"
+              >
+                Sync Latest
+              </button>
+            </div>
+          </div>
+        </div>
+      </AnimatedModalShell>
 
       {/* Sign Out Confirmation Modal */}
       <AnimatedModalShell

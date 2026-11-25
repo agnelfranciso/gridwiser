@@ -162,5 +162,6 @@ export interface SavedTimetableSummary {
   templateName: string;
   canvasBg: string;
   accent: string;
+  shareId?: string | null;
   updatedAt: string;
 }
