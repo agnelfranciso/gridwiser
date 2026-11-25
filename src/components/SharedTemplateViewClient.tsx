@@ -1,13 +1,19 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged, type User } from 'firebase/auth';
 import {
   ArrowLeft,
+  BookmarkPlus,
   Copy,
   Check,
+  Loader2,
   Sliders,
 } from 'lucide-react';
+import { auth } from '@/lib/firebase';
+import { saveUserCustomTemplate } from '@/lib/firestore-timetables';
 import { TimetableRenderer } from '@/components/TimetableRenderer';
 import {
   AnalyzedSchedule,
@@ -135,7 +141,17 @@ export function SharedTemplateViewClient({
 }: {
   template: CustomTemplateDefinition;
 }) {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [addedToAccount, setAddedToAccount] = useState(false);
+  const [toast, setToast] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (curr) => setUser(curr));
+    return () => unsub();
+  }, []);
 
   const preset = useMemo(() => toPresetTemplate(template), [template]);
 
@@ -144,6 +160,48 @@ export function SharedTemplateViewClient({
       navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleAddToAccount = async () => {
+    if (!user) {
+      router.push(`/signin?next=${encodeURIComponent(`/template/${template.id}`)}`);
+      return;
+    }
+    if (saving || addedToAccount) return;
+    setSaving(true);
+    try {
+      await saveUserCustomTemplate(
+        user.uid,
+        {
+          name: template.name,
+          category: template.category || 'Community',
+          description: template.description || '',
+          layout: template.layout,
+          bgPattern: template.bgPattern,
+          mode: template.mode,
+          displayFont: template.displayFont,
+          bodyFont: template.bodyFont,
+          monoFamily: template.monoFamily,
+          radiusPx: template.radiusPx,
+          tokens: template.tokens,
+          authorName: template.authorName || 'Community Creator',
+          shareId: null,
+        },
+        null
+      );
+      setAddedToAccount(true);
+      setToast({
+        type: 'ok',
+        text: 'Added to your account! It now appears in your Studio Templates menu.',
+      });
+      setTimeout(() => setToast(null), 4000);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not add template to your account.';
+      setToast({ type: 'err', text: msg });
+      setTimeout(() => setToast(null), 4000);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -177,17 +235,53 @@ export function SharedTemplateViewClient({
             className="inline-flex items-center gap-1.5 rounded-lg border border-[#272732] bg-[#131318] px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-zinc-500"
           >
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-            <span>{copied ? 'Copied' : 'Share Theme'}</span>
+            <span className="hidden sm:inline">{copied ? 'Copied' : 'Share Theme'}</span>
+          </button>
+          <button
+            type="button"
+            disabled={saving || addedToAccount}
+            onClick={handleAddToAccount}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
+              addedToAccount
+                ? 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
+                : 'bg-blue-600 text-white hover:bg-blue-500'
+            } disabled:opacity-75`}
+          >
+            {saving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : addedToAccount ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <BookmarkPlus className="h-3.5 w-3.5" />
+            )}
+            <span>
+              {saving
+                ? 'Adding...'
+                : addedToAccount
+                  ? 'Added to Account'
+                  : user
+                    ? 'Add to My Account'
+                    : 'Sign in to Add'}
+            </span>
           </button>
           <Link
             href="/theme-creator"
             className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-1.5 text-xs font-semibold text-[#09090B] transition hover:bg-zinc-200"
           >
             <Sliders className="h-3.5 w-3.5" />
-            <span>Customize or Remix</span>
+            <span className="hidden sm:inline">Customize or Remix</span>
+            <span className="sm:hidden">Remix</span>
           </Link>
         </div>
       </header>
+
+      {toast && (
+        <div className="fixed bottom-4 right-4 z-50 rounded-xl border px-4 py-2.5 text-xs font-medium shadow-2xl backdrop-blur-md bg-[#121218]/95 border-zinc-700 text-zinc-100">
+          <span className={toast.type === 'err' ? 'text-rose-400' : 'text-emerald-400'}>
+            {toast.text}
+          </span>
+        </div>
+      )}
 
       {/* Main View */}
       <main className="mx-auto w-full max-w-[1340px] flex-1 p-4 lg:p-8 space-y-6">

@@ -38,7 +38,9 @@ import {
 } from 'lucide-react';
 import {
   ALL_DAYS,
+  toPresetTemplate,
   type DayOfWeek,
+  type PresetTemplate,
   type PresetTemplateId,
   type SavedTimetableRecord,
   type SavedTimetableSummary,
@@ -50,6 +52,7 @@ import { auth, formatFirebaseAuthError } from '@/lib/firebase';
 import {
   deleteUserTimetable,
   getUserTimetable,
+  listUserCustomTemplates,
   listUserTimetables,
   publishSharedTimetable,
   saveUserTimetable,
@@ -127,6 +130,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [savedList, setSavedList] = useState<SavedTimetableSummary[]>([]);
   const [loadingSaved, setLoadingSaved] = useState(false);
+  const [customTemplates, setCustomTemplates] = useState<PresetTemplate[]>([]);
   const [aiImportOpen, setAiImportOpen] = useState(false);
   const [overlapAlertOpen, setOverlapAlertOpen] = useState(false);
 
@@ -323,6 +327,15 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     [showToast]
   );
 
+  const fetchCustomTemplates = useCallback(async (uid: string) => {
+    try {
+      const items = await listUserCustomTemplates(uid);
+      setCustomTemplates(items.map(toPresetTemplate));
+    } catch {
+      // Ignore if offline or rules not yet propagated
+    }
+  }, []);
+
   // Observe Firebase Auth state:
   // - Logged out -> Welcome / Get Started UI
   // - Logged in -> Go directly to Studio Dashboard and sync Firestore timetables
@@ -367,10 +380,12 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
               showToast('Timetable generated – save failed, try manually.', 'err');
             });
           fetchSavedList(firebaseUser.uid).catch(() => { });
+          fetchCustomTemplates(firebaseUser.uid).catch(() => { });
           return;
         }
 
         setViewMode('studio');
+        fetchCustomTemplates(firebaseUser.uid).catch(() => { });
         const items = await fetchSavedList(firebaseUser.uid);
 
         if (hasDraftSubjectsRef.current) {
@@ -392,6 +407,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
         }
       } else if (!initialRecord) {
         setSavedList([]);
+        setCustomTemplates([]);
         setSavedId(null);
         setShareId(null);
         const params = new URLSearchParams(window.location.search);
@@ -407,7 +423,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     );
 
     return () => unsub();
-  }, [fetchSavedList, initialRecord, showToast]);
+  }, [fetchCustomTemplates, fetchSavedList, initialRecord, showToast]);
 
   // Support ?load=<shareId> from Share page "Use as Template"
   useEffect(() => {
@@ -440,8 +456,18 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     }
   }, [resetHistory, showToast]);
 
+  const allTemplates = useMemo(
+    () => [...customTemplates, ...PRESET_TEMPLATES],
+    [customTemplates]
+  );
+
   const schedule = useMemo(() => analyzeSchedule(subjects, meta), [subjects, meta]);
-  const activeTemplate = useMemo(() => getPresetTemplate(templateId), [templateId]);
+  const activeTemplate = useMemo(
+    () =>
+      customTemplates.find((t) => t.id === templateId) ??
+      getPresetTemplate(templateId),
+    [customTemplates, templateId]
+  );
   const isDailyTemplate =
     activeTemplate.layout === 'daily-poster' ||
     activeTemplate.layout === 'daily-deck' ||
@@ -451,6 +477,8 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     setActiveNav(nav);
     if (nav === 'saved' && user) {
       fetchSavedList(user.uid);
+    } else if ((nav === 'templates' || nav === 'timetable') && user) {
+      fetchCustomTemplates(user.uid);
     }
   };
 
@@ -1105,7 +1133,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                     active={activeNav === 'templates'}
                     icon={<Palette className="h-4 w-4" />}
                     label="Templates"
-                    badge={String(PRESET_TEMPLATES.length)}
+                    badge={String(allTemplates.length)}
                     onClick={() => handleNavClick('templates')}
                   />
                   <SidebarNavButton
@@ -1572,8 +1600,9 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
 
                       <div className="grid items-start gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
                         <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2 xl:grid xl:content-start xl:grid-cols-1 xl:overflow-visible xl:pb-0">
-                          {PRESET_TEMPLATES.map((tpl) => {
+                          {allTemplates.map((tpl) => {
                             const active = tpl.id === templateId;
+                            const isCustom = tpl.id.startsWith('custom-');
                             return (
                               <button
                                 key={tpl.id}
@@ -1613,7 +1642,13 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                                       {tpl.name}
                                     </span>
                                     <span className="shrink-0 text-[10px] font-medium text-zinc-500">
-                                      {tpl.layoutLabel}
+                                      {isCustom ? (
+                                        <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-blue-400">
+                                          Custom
+                                        </span>
+                                      ) : (
+                                        tpl.layoutLabel
+                                      )}
                                     </span>
                                   </div>
                                   <p className="mt-1 line-clamp-2 text-[11px] text-zinc-400">
@@ -1662,7 +1697,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                       <div className="no-print flex flex-col gap-2.5 rounded-xl border border-[#202026] bg-[#121215] px-3.5 py-2 md:flex-row md:items-center md:justify-between md:gap-3">
                         <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
                           <span className="mr-1 shrink-0 text-[11px] text-zinc-500">Preset:</span>
-                          {PRESET_TEMPLATES.map((tpl) => {
+                          {allTemplates.map((tpl) => {
                             const active = tpl.id === templateId;
                             return (
                               <button

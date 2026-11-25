@@ -142,24 +142,27 @@ service cloud.firestore {
         (url == '' || url.matches("^https://.*") || url.matches("^http://.*"));
     }
 
-    // Validate preset template identifier enum
+    // Validate preset or user custom template identifier
     function isValidTemplateId(templateId) {
       return templateId is string &&
-        templateId in [
-          'cron-studio',
-          'swiss-horizontal',
-          'bento-workspace',
-          'editorial-journal',
-          'linear-columns',
-          'terminal-console',
-          'gallery-paper',
-          'poster-tiles',
-          'precision-athletic',
-          'acid-daily-poster',
-          'editorial-daily-deck',
-          'exhibition-blue-daily',
-          'crimson-pulse'
-        ];
+        (
+          templateId in [
+            'cron-studio',
+            'swiss-horizontal',
+            'bento-workspace',
+            'editorial-journal',
+            'linear-columns',
+            'terminal-console',
+            'gallery-paper',
+            'poster-tiles',
+            'precision-athletic',
+            'acid-daily-poster',
+            'editorial-daily-deck',
+            'exhibition-blue-daily',
+            'crimson-pulse'
+          ] ||
+          (templateId.size() >= 6 && templateId.size() <= 64 && templateId.matches("^custom-[a-zA-Z0-9_-]+$"))
+        );
     }
 
     // Validate timetable metadata map structure, types, and bounds
