@@ -24,6 +24,7 @@ import {
   RotateCcw,
   LogOut,
   LogIn,
+  Monitor,
 } from 'lucide-react';
 import {
   ALL_DAYS,
@@ -124,6 +125,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   const [activeDailyDay, setActiveDailyDay] = useState<DayOfWeek>('Mon');
   const [exportingAllDays, setExportingAllDays] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [mobileNoticeOpen, setMobileNoticeOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const dailyExportRefs = useRef<Partial<Record<DayOfWeek, HTMLDivElement | null>>>({});
   const hasDraftSubjectsRef = useRef<boolean>(subjects.length > 0);
@@ -180,6 +182,13 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
       setAuthLoading(false);
 
       if (firebaseUser) {
+        if (
+          typeof window !== 'undefined' &&
+          window.innerWidth < 768 &&
+          sessionStorage.getItem('gridwiser_mobile_notice_dismissed') !== '1'
+        ) {
+          setMobileNoticeOpen(true);
+        }
         upsertUserProfile(firebaseUser).catch(() => { });
         const params = new URLSearchParams(window.location.search);
         const loadParam = params.get('load');
@@ -1787,6 +1796,38 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
           ))}
         </div>
       )}
+
+      {/* Mobile Desktop-Recommended Notice (shown when logged in on mobile) */}
+      <AnimatedModalShell
+        open={mobileNoticeOpen}
+        onClose={() => {
+          sessionStorage.setItem('gridwiser_mobile_notice_dismissed', '1');
+          setMobileNoticeOpen(false);
+        }}
+        zIndexClass="z-50"
+      >
+        <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 bg-[#080B12] p-6 shadow-2xl">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-500/30 bg-blue-500/15 text-blue-400">
+            <Monitor className="h-5 w-5" />
+          </div>
+          <h3 className="mt-4 text-base font-semibold text-white">
+            Best Experienced on Desktop
+          </h3>
+          <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+            You&apos;re using GridWiser on a mobile device. While we are actively striving to improve our mobile UI, some studio components and fixed timetable layouts may not work or look as intended on smaller screens. We recommend using a desktop device for the best experience—or you can continue to the website below.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              sessionStorage.setItem('gridwiser_mobile_notice_dismissed', '1');
+              setMobileNoticeOpen(false);
+            }}
+            className="mt-5 w-full rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-[#050811] transition hover:bg-zinc-200"
+          >
+            Continue to Website
+          </button>
+        </div>
+      </AnimatedModalShell>
 
       {/* Toast */}
       <AnimatePresence>
