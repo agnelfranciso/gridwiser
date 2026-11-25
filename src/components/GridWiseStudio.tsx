@@ -1076,32 +1076,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                   </div>
                 </div>
 
-                {/* Mobile Tab Bar */}
-                <div className="grid grid-cols-4 gap-1 rounded-xl border border-[#1E1E24] bg-[#111115] p-1 lg:hidden">
-                  {(['subjects', 'templates', 'timetable', 'saved'] as StudioNav[]).map((nav) => {
-                    const active = activeNav === nav;
-                    return (
-                      <button
-                        key={nav}
-                        type="button"
-                        onClick={() => handleNavClick(nav)}
-                        className={`relative rounded-lg py-1.5 text-center text-[11px] font-medium capitalize transition-colors ${active ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
-                          }`}
-                      >
-                        {active && (
-                          <motion.span
-                            layoutId="studio-mobile-nav-pill"
-                            transition={SPRING_PILL}
-                            className="absolute inset-0 rounded-lg bg-[#202028]"
-                          />
-                        )}
-                        <span className="relative z-10">{nav}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:gap-2 lg:overflow-visible lg:pb-0">
                   <AiImportButton
                     onClick={() => setAiImportOpen(true)}
                     compact
@@ -1165,7 +1140,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                 </div>
               </header>
 
-              <main className="flex-1 p-4 sm:p-6">
+              <main className="flex-1 p-3 pb-24 sm:p-6 lg:pb-6">
                 <AnimatePresence mode="wait">
                   {activeNav === 'subjects' && (
                     <motion.div
@@ -1259,8 +1234,8 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                         </button>
                       </div>
 
-                      <div className="grid items-start gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-                        <div className="grid content-start gap-2.5 sm:grid-cols-2 xl:grid-cols-1">
+                      <div className="grid items-start gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
+                        <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2 xl:grid xl:content-start xl:grid-cols-1 xl:overflow-visible xl:pb-0">
                           {PRESET_TEMPLATES.map((tpl) => {
                             const active = tpl.id === templateId;
                             return (
@@ -1268,7 +1243,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                                 key={tpl.id}
                                 type="button"
                                 onClick={() => setTemplateId(tpl.id)}
-                                className={`flex items-start gap-3.5 rounded-xl border p-3.5 text-left transition ${active
+                                className={`flex w-[220px] shrink-0 snap-start items-start gap-3 rounded-xl border p-3 text-left transition xl:w-auto xl:gap-3.5 xl:p-3.5 ${active
                                   ? 'border-white bg-[#17171C]'
                                   : 'border-[#202026] bg-[#121215] hover:border-[#32323D]'
                                   }`}
@@ -1450,27 +1425,32 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                           </div>
                         </div>
                       ) : (
-                        <AnimatePresence mode="wait">
-                          <motion.div
-                            key={activeTemplate.id}
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -6 }}
-                            transition={TRANSITION_FAST}
-                            className="overflow-x-auto"
-                          >
-                            <TimetableRenderer
-                              canvasRef={canvasRef}
-                              meta={meta}
-                              schedule={schedule}
-                              template={activeTemplate}
-                              interactive
-                              selectedDay={activeDailyDay}
-                              onSelectDay={setActiveDailyDay}
-                              onClickBlock={openBlockEditor}
-                            />
-                          </motion.div>
-                        </AnimatePresence>
+                        <div className="space-y-2">
+                          <p className="no-print text-[11px] text-zinc-500 lg:hidden">
+                            Swipe horizontally to inspect the fixed layout · Tap any session to edit
+                          </p>
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key={activeTemplate.id}
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -6 }}
+                              transition={TRANSITION_FAST}
+                              className="overflow-x-auto"
+                            >
+                              <TimetableRenderer
+                                canvasRef={canvasRef}
+                                meta={meta}
+                                schedule={schedule}
+                                template={activeTemplate}
+                                interactive
+                                selectedDay={activeDailyDay}
+                                onSelectDay={setActiveDailyDay}
+                                onClickBlock={openBlockEditor}
+                              />
+                            </motion.div>
+                          </AnimatePresence>
+                        </div>
                       )}
 
                       {schedule.unresolvedOverlaps.length > 0 && (
@@ -1609,6 +1589,40 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                 </AnimatePresence>
               </main>
             </div>
+
+            {/* Fixed Bottom Navigation Bar on Mobile */}
+            <nav className="no-print fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 gap-1 border-t border-[#1E1E26] bg-[#0A0A0E]/95 px-2 py-1.5 backdrop-blur-xl lg:hidden">
+              {(
+                [
+                  { id: 'subjects', label: 'Subjects', icon: Calendar },
+                  { id: 'templates', label: 'Themes', icon: Palette },
+                  { id: 'timetable', label: 'Timetable', icon: LayoutGrid },
+                  { id: 'saved', label: 'Saved', icon: FolderOpen },
+                ] as const
+              ).map(({ id, label, icon: Icon }) => {
+                const active = activeNav === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => handleNavClick(id)}
+                    className={`relative flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium transition-colors ${
+                      active ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="studio-mobile-nav-pill"
+                        transition={SPRING_PILL}
+                        className="absolute inset-0 rounded-xl border border-white/10 bg-[#1B1C24]"
+                      />
+                    )}
+                    <Icon className="relative z-10 h-4 w-4" />
+                    <span className="relative z-10">{label}</span>
+                  </button>
+                );
+              })}
+            </nav>
 
             <AnimatedModalShell
               open={Boolean(editingBlock)}
@@ -1838,7 +1852,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.96 }}
             transition={SPRING_PILL}
-            className="no-print fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#2B2B34] bg-[#141418]/95 px-4 py-2 text-xs font-medium text-zinc-100 shadow-2xl backdrop-blur-xl"
+            className="no-print fixed bottom-20 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#2B2B34] bg-[#141418]/95 px-4 py-2 text-xs font-medium text-zinc-100 shadow-2xl backdrop-blur-xl lg:bottom-5"
           >
             {toast.type === 'err' ? (
               <AlertCircle className="h-3.5 w-3.5 text-rose-400" />
