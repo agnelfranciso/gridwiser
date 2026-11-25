@@ -25,6 +25,7 @@ import {
   saveUserCustomTemplate,
 } from '@/lib/firestore-timetables';
 import { PRESET_TEMPLATES } from '@/lib/themes';
+import { CURATED_THEME_PALETTES, type CuratedPalettePreset } from '@/lib/ai-theme-parser';
 import { TimetableRenderer } from '@/components/TimetableRenderer';
 import { ThemeAiModal } from '@/components/ThemeAiModal';
 import {
@@ -496,8 +497,81 @@ export function ThemeCreatorStudio() {
             {/* TAB 1: COLORS */}
             {activeTab === 'colors' && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-zinc-300">Preset Quick Start</span>
+                {/* Curated Aesthetic Palettes */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-300">
+                      Curated Aesthetic Palettes
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setAiModalOpen(true)}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-400 hover:text-blue-300"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      <span>AI Generate</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {CURATED_THEME_PALETTES.map((pal) => (
+                      <button
+                        key={pal.id}
+                        type="button"
+                        onClick={() => {
+                          setTemplate((prev) => ({
+                            ...prev,
+                            name: pal.name,
+                            category: pal.category,
+                            description: pal.description,
+                            layout: pal.layout,
+                            mode: pal.mode,
+                            bgPattern: pal.bgPattern,
+                            displayFont: pal.displayFont,
+                            bodyFont: pal.bodyFont,
+                            monoFamily: pal.monoFamily,
+                            radiusPx: pal.radiusPx,
+                            tokens: { ...pal.tokens },
+                          }));
+                          showToast(`Applied aesthetic palette: ${pal.name}`);
+                        }}
+                        className="flex flex-col items-start rounded-xl border border-[#22222C] bg-[#121217] p-2.5 text-left transition hover:border-[#383848] hover:bg-[#16161D]"
+                      >
+                        <div className="flex w-full items-center justify-between">
+                          <span className="truncate text-xs font-semibold text-white">
+                            {pal.name}
+                          </span>
+                          <span
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{ backgroundColor: pal.tokens.accent }}
+                          />
+                        </div>
+                        <span className="text-[10px] text-zinc-500">{pal.category}</span>
+                        <div className="mt-2 flex w-full gap-1">
+                          <span
+                            className="h-3 flex-1 rounded-sm border border-white/10"
+                            style={{ backgroundColor: pal.tokens.canvasBg }}
+                          />
+                          <span
+                            className="h-3 flex-1 rounded-sm border border-white/10"
+                            style={{ backgroundColor: pal.tokens.surfaceBg }}
+                          />
+                          <span
+                            className="h-3 flex-1 rounded-sm border border-white/10"
+                            style={{ backgroundColor: pal.tokens.cardBg }}
+                          />
+                          <span
+                            className="h-3 flex-1 rounded-sm border border-white/10"
+                            style={{ backgroundColor: pal.tokens.accent }}
+                          />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-xs font-semibold text-zinc-400">Default Presets</span>
                   <div className="flex gap-1 overflow-x-auto text-[10px]">
                     <button
                       type="button"
