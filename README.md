@@ -7,7 +7,7 @@
 
   <p>
     <a href="https://gridwise-umber.vercel.app"><strong>Live Demo</strong></a> ·
-    <a href="https://github.com/agnelfranciso/gridwise"><strong>Repository</strong></a> ·
+    <a href="https://github.com/agnelfranciso/gridwiser"><strong>Repository</strong></a> ·
     <a href="https://gridwise-umber.vercel.app/legal"><strong>Terms & Privacy</strong></a>
   </p>
 
