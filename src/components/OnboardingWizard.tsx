@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ArrowRight,
@@ -55,14 +55,6 @@ export function OnboardingWizard({
   const [internalStep, setInternalStep] = useState<1 | 2>(1);
   const step = controlledStep ?? internalStep;
   const [overlapAlertOpen, setOverlapAlertOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   const schedule = useMemo(() => analyzeSchedule(subjects, meta), [subjects, meta]);
   const selectedTemplate = useMemo(() => getPresetTemplate(templateId), [templateId]);
@@ -402,7 +394,7 @@ export function OnboardingWizard({
                   </div>
                 </div>
 
-                <div className="p-2.5 sm:p-6">
+                <div className="p-3 sm:p-6">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={selectedTemplate.id}
@@ -410,14 +402,23 @@ export function OnboardingWizard({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
                       transition={TRANSITION_FAST}
-                      className="overflow-x-auto"
                     >
-                      <TimetableRenderer
-                        meta={meta}
-                        schedule={schedule}
-                        template={selectedTemplate}
-                        compactPreview={isMobile}
-                      />
+                      <ScaledTimetablePreview
+                        designWidth={
+                          selectedTemplate.layout === 'daily-poster' ||
+                          selectedTemplate.layout === 'daily-deck' ||
+                          selectedTemplate.layout === 'exhibition-daily'
+                            ? 680
+                            : 1060
+                        }
+                      >
+                        <TimetableRenderer
+                          meta={meta}
+                          schedule={schedule}
+                          template={selectedTemplate}
+                          compactPreview={false}
+                        />
+                      </ScaledTimetablePreview>
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -467,6 +468,59 @@ export function OnboardingWizard({
           setOverlapAlertOpen(false);
         }}
       />
+    </div>
+  );
+}
+
+/**
+ * Keeps the timetable in its exact fixed desktop/poster layout and scales it
+ * proportionally to fit smaller mobile viewports without reflowing columns.
+ */
+function ScaledTimetablePreview({
+  designWidth,
+  children,
+}: {
+  designWidth: number;
+  children: React.ReactNode;
+}) {
+  const outerRef = useRef<HTMLDivElement | null>(null);
+  const innerRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1);
+  const [innerHeight, setInnerHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const update = () => {
+      if (!outerRef.current || !innerRef.current) return;
+      const avail = outerRef.current.clientWidth;
+      const nextScale = avail > 0 && avail < designWidth ? avail / designWidth : 1;
+      setScale(nextScale);
+      setInnerHeight(innerRef.current.scrollHeight);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    if (outerRef.current) ro.observe(outerRef.current);
+    if (innerRef.current) ro.observe(innerRef.current);
+    return () => ro.disconnect();
+  }, [designWidth]);
+
+  return (
+    <div
+      ref={outerRef}
+      className="w-full overflow-hidden"
+      style={{
+        height: innerHeight !== null && scale < 1 ? `${Math.ceil(innerHeight * scale)}px` : 'auto',
+      }}
+    >
+      <div
+        ref={innerRef}
+        style={{
+          width: scale < 1 ? `${designWidth}px` : '100%',
+          transform: scale < 1 ? `scale(${scale})` : undefined,
+          transformOrigin: 'top left',
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }

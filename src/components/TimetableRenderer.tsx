@@ -555,10 +555,16 @@ export function TimetableRenderer({
     </div>
   );
 
+  const isDailyLayout =
+    template.layout === 'daily-poster' ||
+    template.layout === 'daily-deck' ||
+    template.layout === 'exhibition-daily';
+
   return (
     <div
       ref={canvasRef}
       style={{
+        minWidth: isDailyLayout ? '680px' : '1060px',
         backgroundColor: tokens.canvasBg,
         color: tokens.text,
         fontFamily: fontBody,
@@ -583,9 +589,9 @@ export function TimetableRenderer({
             borderBottomStyle: 'solid',
             borderBottomColor: tokens.border,
           }}
-          className={compactPreview ? 'px-4 py-3.5' : 'px-6 py-5'}
+          className={compactPreview ? 'px-5 py-4' : 'px-6 py-5'}
         >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex items-end justify-between gap-4">
           <div>
             <div
               className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-wider"
@@ -596,7 +602,7 @@ export function TimetableRenderer({
               <span>{template.layoutLabel}</span>
             </div>
             <h2
-              className={`font-semibold tracking-tight ${compactPreview ? 'text-lg' : 'text-2xl sm:text-[26px]'
+              className={`font-semibold tracking-tight ${compactPreview ? 'text-xl' : 'text-[26px]'
                 } ${template.layout === 'horizontal-timeline' ? 'uppercase tracking-tighter' : ''}`}
               style={{ color: tokens.text, fontFamily: fontDisplay }}
             >
@@ -643,7 +649,7 @@ export function TimetableRenderer({
       )}
 
       {/* BODY RENDERED BY DISTINCT ARCHITECTURAL LAYOUT */}
-      <div key={template.layout} className={compactPreview ? 'p-2.5 sm:p-3.5' : 'p-3.5 sm:p-6'}>
+      <div key={template.layout} className={compactPreview ? 'p-4' : 'p-6'}>
         {schedule.blocks.length === 0 ? (
           <div
             className="flex h-52 flex-col items-center justify-center rounded-xl border border-dashed text-center"
@@ -657,10 +663,7 @@ export function TimetableRenderer({
           </div>
         ) : template.layout === 'cron-sidebar-grid' ? (
           /* 1. CRON STUDIO: PROPORTIONAL GRID + RIGHT BREAKDOWN RAIL */
-          <div
-            className={`grid gap-4 ${compactPreview ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1fr_220px]'
-              }`}
-          >
+          <div className="grid grid-cols-[1fr_220px] gap-4">
             {renderProportionalGrid(false, false)}
 
             {!compactPreview && (
@@ -959,7 +962,7 @@ export function TimetableRenderer({
           /* 3. SAPPHIRE BENTO */
           <div className="space-y-4">
             {!compactPreview && (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-4 gap-3">
                 <div
                   style={{
                     backgroundColor: tokens.cardBg,
@@ -1002,7 +1005,7 @@ export function TimetableRenderer({
                     borderColor: tokens.border,
                     borderRadius: `${template.radiusPx}px`,
                   }}
-                  className="p-3.5 sm:col-span-2"
+                  className="col-span-2 p-3.5"
                 >
                   <div className="mb-1.5 text-[10px] uppercase tracking-wider" style={{ color: tokens.textMuted, fontFamily: fontMono }}>
                     Active Subjects
@@ -1032,11 +1035,7 @@ export function TimetableRenderer({
             )}
 
             {/* Bento Day Cards Grid */}
-            <div
-              className={`grid gap-3 ${
-                compactPreview ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
-              }`}
-            >
+            <div className="grid grid-cols-3 gap-3">
               {schedule.days.map((day) => {
                 const items = getDayVisualItems(day);
                 return (
@@ -1164,10 +1163,7 @@ export function TimetableRenderer({
           </div>
         ) : template.layout === 'magazine-spread' ? (
           /* 4. EDITORIAL JOURNAL */
-          <div
-            className={`grid gap-6 ${compactPreview ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-[240px_1fr]'
-              }`}
-          >
+          <div className="grid grid-cols-[240px_1fr] gap-6">
             {!compactPreview && (
               <aside
                 style={{
@@ -1252,7 +1248,7 @@ export function TimetableRenderer({
                         No scheduled classes.
                       </p>
                     ) : (
-                      <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="grid grid-cols-2 gap-2">
                         {items.map((item) =>
                           item.kind === 'merged' ? (
                             <div
@@ -1473,7 +1469,7 @@ export function TimetableRenderer({
           </div>
         ) : template.layout === 'poster-tiles' ? (
           /* 7. VIOLET POSTER */
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-3 gap-4">
             {schedule.days.map((day) => {
               const items = getDayVisualItems(day);
               return (
