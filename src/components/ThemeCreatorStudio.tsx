@@ -14,6 +14,7 @@ import {
   Check,
   Type,
   Layout,
+  Monitor,
   Trash2,
   FolderOpen,
 } from 'lucide-react';
@@ -25,7 +26,7 @@ import {
   saveUserCustomTemplate,
 } from '@/lib/firestore-timetables';
 import { PRESET_TEMPLATES } from '@/lib/themes';
-import { CURATED_THEME_PALETTES, type CuratedPalettePreset } from '@/lib/ai-theme-parser';
+import { CURATED_THEME_PALETTES } from '@/lib/ai-theme-parser';
 import { TimetableRenderer } from '@/components/TimetableRenderer';
 import { ThemeAiModal } from '@/components/ThemeAiModal';
 import {
@@ -376,8 +377,78 @@ export function ThemeCreatorStudio() {
 
   const activePresetPreview = useMemo(() => toPresetTemplate(template), [template]);
 
+  const [isMobileBlocked, setIsMobileBlocked] = useState(false);
+
+  useEffect(() => {
+    const checkViewportAndDevice = () => {
+      const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+      const isMobileUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      const isSmallViewport = typeof window !== 'undefined' && window.innerWidth < 1024;
+      setIsMobileBlocked(isMobileUa || isSmallViewport);
+    };
+    checkViewportAndDevice();
+    window.addEventListener('resize', checkViewportAndDevice);
+    return () => window.removeEventListener('resize', checkViewportAndDevice);
+  }, []);
+
+  if (isMobileBlocked) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#08080A] px-6 py-12 text-center text-zinc-100">
+        <div className="max-w-md rounded-2xl border border-[#24242F] bg-[#0F0F14] p-7 shadow-2xl">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-blue-400">
+            <Monitor className="h-6 w-6" />
+          </div>
+          <span className="mt-4 inline-block rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+            Desktop Exclusive
+          </span>
+          <h1 className="mt-3 text-xl font-bold tracking-tight text-white">
+            Theme Creator Requires a Desktop Browser
+          </h1>
+          <p className="mt-2.5 text-xs leading-relaxed text-zinc-400">
+            GridWiser Theme Creator includes precision color-token editors, live multi-column
+            timetable previews, and AI JSON tooling designed exclusively for desktop &amp; laptop
+            screens (1024px+). Mobile and tablet browsers are blocked to prevent layout clipping.
+          </p>
+          <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:justify-center">
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#09090B] transition hover:bg-zinc-200"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Back to Main Studio
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen flex-col bg-[#08080A] text-zinc-100">
+    <>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#08080A] px-6 py-12 text-center text-zinc-100 lg:hidden">
+        <div className="max-w-md rounded-2xl border border-[#24242F] bg-[#0F0F14] p-7 shadow-2xl">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10 text-blue-400">
+            <Monitor className="h-6 w-6" />
+          </div>
+          <span className="mt-4 inline-block rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+            Desktop Exclusive
+          </span>
+          <h1 className="mt-3 text-xl font-bold tracking-tight text-white">
+            Theme Creator Requires a Desktop Browser
+          </h1>
+          <p className="mt-2.5 text-xs leading-relaxed text-zinc-400">
+            GridWiser Theme Creator is exclusively available on desktop &amp; laptop screens (1024px+).
+          </p>
+          <Link
+            href="/"
+            className="mt-6 inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#09090B] transition hover:bg-zinc-200"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to Main Studio
+          </Link>
+        </div>
+      </div>
+      <div className="hidden min-h-screen flex-col bg-[#08080A] text-zinc-100 lg:flex">
       {/* Top Navbar */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[#1E1E24] bg-[#0E0E12]/90 px-4 backdrop-blur-md">
         <div className="flex items-center gap-3">
@@ -1091,7 +1162,8 @@ export function ThemeCreatorStudio() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 }
 

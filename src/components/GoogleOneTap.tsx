@@ -14,6 +14,12 @@ interface GoogleCredentialResponse {
   select_by?: string;
 }
 
+interface PromptMomentNotification {
+  isNotDisplayed?: () => boolean;
+  isSkippedMoment?: () => boolean;
+  isDismissedMoment?: () => boolean;
+}
+
 interface GoogleAccountsId {
   initialize: (config: {
     client_id: string;
@@ -21,9 +27,10 @@ interface GoogleAccountsId {
     auto_select?: boolean;
     cancel_on_tap_outside?: boolean;
     itp_support?: boolean;
+    use_fedcm_for_prompt?: boolean;
     context?: 'signin' | 'signup' | 'use';
   }) => void;
-  prompt: () => void;
+  prompt: (momentListener?: (notification: PromptMomentNotification) => void) => void;
   cancel: () => void;
 }
 
@@ -47,6 +54,9 @@ interface GoogleOneTapProps {
 const GSI_SCRIPT_ID = 'google-identity-services-client';
 const GSI_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
 
+let initializedClientId: string | null = null;
+let promptInFlight = false;
+
 export function GoogleOneTap({
   disabled = false,
   context = 'signin',
@@ -68,45 +78,73 @@ export function GoogleOneTap({
     }
 
     let cancelled = false;
-    let prompted = false;
+    let promptTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const initAndPrompt = () => {
-      if (cancelled || prompted || auth.currentUser) return;
-      const gsi = window.google?.accounts?.id;
-      if (!gsi) return;
+    const schedulePrompt = () => {
+      if (cancelled || auth.currentUser || promptInFlight) return;
+      if (promptTimer) clearTimeout(promptTimer);
 
-      prompted = true;
-      gsi.initialize({
-        client_id: clientId,
-        auto_select: true,
-        cancel_on_tap_outside: false,
-        itp_support: true,
-        context,
-        callback: async (response: GoogleCredentialResponse) => {
-          if (!response.credential) return;
-          try {
-            const credential = GoogleAuthProvider.credential(response.credential);
-            const result = await signInWithCredential(auth, credential);
-            if (result.user) {
-              await upsertUserProfile(result.user);
-            }
-            onSuccessRef.current?.();
-          } catch (err) {
-            onErrorRef.current?.(err);
+      // Defer slightly so React StrictMode mount/unmount cycles or rapid state
+      // transitions do not start and immediately abort a FedCM credential request.
+      promptTimer = setTimeout(() => {
+        if (cancelled || auth.currentUser || promptInFlight) return;
+        const gsi = window.google?.accounts?.id;
+        if (!gsi) return;
+
+        try {
+          if (initializedClientId !== clientId) {
+            gsi.initialize({
+              client_id: clientId,
+              auto_select: true,
+              cancel_on_tap_outside: false,
+              itp_support: true,
+              use_fedcm_for_prompt: true,
+              context,
+              callback: async (response: GoogleCredentialResponse) => {
+                promptInFlight = false;
+                if (!response.credential) return;
+                try {
+                  const credential = GoogleAuthProvider.credential(response.credential);
+                  const result = await signInWithCredential(auth, credential);
+                  if (result.user) {
+                    await upsertUserProfile(result.user);
+                  }
+                  onSuccessRef.current?.();
+                } catch (err) {
+                  onErrorRef.current?.(err);
+                }
+              },
+            });
+            initializedClientId = clientId;
           }
-        },
-      });
-      gsi.prompt();
+
+          promptInFlight = true;
+          gsi.prompt((notification) => {
+            if (
+              notification.isNotDisplayed?.() ||
+              notification.isSkippedMoment?.() ||
+              notification.isDismissedMoment?.()
+            ) {
+              promptInFlight = false;
+            }
+          });
+        } catch {
+          promptInFlight = false;
+        }
+      }, 200);
     };
 
     const unsubAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        window.google?.accounts?.id?.cancel();
+        if (promptTimer) {
+          clearTimeout(promptTimer);
+          promptTimer = null;
+        }
         return;
       }
 
       if (window.google?.accounts?.id) {
-        initAndPrompt();
+        schedulePrompt();
         return;
       }
 
@@ -120,15 +158,18 @@ export function GoogleOneTap({
         document.head.appendChild(script);
       }
 
-      script.addEventListener('load', initAndPrompt);
+      script.addEventListener('load', schedulePrompt);
     });
 
     return () => {
       cancelled = true;
+      if (promptTimer) {
+        clearTimeout(promptTimer);
+        promptTimer = null;
+      }
       unsubAuth();
       const script = document.getElementById(GSI_SCRIPT_ID);
-      script?.removeEventListener('load', initAndPrompt);
-      window.google?.accounts?.id?.cancel();
+      script?.removeEventListener('load', schedulePrompt);
     };
   }, [context, disabled]);
 
