@@ -495,7 +495,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
         backgroundColor: activeTemplate.tokens.canvasBg,
       });
       const link = document.createElement('a');
-      link.download = `${(meta.title || 'gridwise-timetable').toLowerCase().replace(/\s+/g, '-')}.png`;
+      link.download = `${(meta.title || 'gridwiser-timetable').toLowerCase().replace(/\s+/g, '-')}.png`;
       link.href = dataUrl;
       link.click();
       showToast('Exported high-resolution PNG.');
@@ -513,10 +513,10 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     try {
       const { default: JSZip } = await import('jszip');
       const zip = new JSZip();
-      const baseSlug = (meta.title || 'gridwise-timetable')
+      const baseSlug = (meta.title || 'gridwiser-timetable')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '') || 'gridwise-timetable';
+        .replace(/(^-|-$)/g, '') || 'gridwiser-timetable';
 
       let exported = 0;
       for (let i = 0; i < schedule.days.length; i += 1) {
@@ -568,10 +568,10 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     try {
       const { jsPDF } = await import('jspdf');
       const baseSlug =
-        (meta.title || 'gridwise-timetable')
+        (meta.title || 'gridwiser-timetable')
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, '') || 'gridwise-timetable';
+          .replace(/(^-|-$)/g, '') || 'gridwiser-timetable';
 
       const loadImage = (src: string) =>
         new Promise<HTMLImageElement>((resolve, reject) => {
@@ -651,7 +651,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${(meta.title || 'gridwise-timetable').toLowerCase().replace(/\s+/g, '-')}.ics`;
+    link.download = `${(meta.title || 'gridwiser-timetable').toLowerCase().replace(/\s+/g, '-')}.ics`;
     link.click();
     URL.revokeObjectURL(url);
     showToast('Downloaded .ics calendar file.');
@@ -663,7 +663,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${(meta.title || 'gridwise-timetable').toLowerCase().replace(/\s+/g, '-')}.json`;
+    link.download = `${(meta.title || 'gridwiser-timetable').toLowerCase().replace(/\s+/g, '-')}.json`;
     link.click();
     URL.revokeObjectURL(url);
     showToast('Exported JSON backup.');
@@ -993,7 +993,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
               <header className="no-print sticky top-0 z-20 flex flex-col gap-2.5 border-b border-[#1C1C22] bg-[#0A0A0C]/90 px-3 py-2.5 backdrop-blur-xl sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:py-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="font-medium text-zinc-400 lg:text-zinc-500">GridWise</span>
+                    <span className="font-medium text-zinc-400 lg:text-zinc-500">GridWiser</span>
                     <span className="text-zinc-700">/</span>
                     <AnimatePresence mode="wait">
                       <motion.span

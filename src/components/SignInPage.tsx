@@ -99,7 +99,7 @@ export function SignInPage() {
         }}
       />
 
-      {/* Split Card Shell inspired by reference, styled in GridWise Obsidian + Cobalt */}
+      {/* Split Card Shell inspired by reference, styled in GridWiser Obsidian + Cobalt */}
       <motion.div
         initial={{ opacity: 0, y: 16, scale: 0.985 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -142,7 +142,7 @@ export function SignInPage() {
               Your weekly schedule, always crystal clear.
             </h2>
             <p className="mt-3 max-w-md text-xs leading-relaxed text-blue-100/75 sm:text-[13px]">
-              GridWise turns your subjects, timings, and AI imports into print-ready timetables synced seamlessly across every device.
+              GridWiser turns your subjects, timings, and AI imports into print-ready timetables synced seamlessly across every device.
             </p>
           </div>
         </div>
@@ -162,7 +162,7 @@ export function SignInPage() {
 
           <div className="my-auto py-8">
             <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-[26px]">
-              Sign in to GridWise
+              Sign in to GridWiser
             </h1>
             <p className="mt-2 text-xs leading-relaxed text-zinc-400">
               Sign in with Google to save your schedules, customize themes, and publish shareable links.

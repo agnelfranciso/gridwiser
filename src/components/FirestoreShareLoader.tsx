@@ -47,7 +47,7 @@ export function FirestoreShareLoader({ shareId }: { shareId: string }) {
           href="/"
           className="mt-2 rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#09090B] hover:bg-zinc-200"
         >
-          Back to GridWise
+          Back to GridWiser
         </Link>
       </div>
     );

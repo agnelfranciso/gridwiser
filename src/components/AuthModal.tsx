@@ -112,7 +112,7 @@ export function AuthModal({
               className="mt-6"
             >
               <h2 className="text-xl font-semibold tracking-tight text-white">
-                {mode === 'signin' ? 'Welcome back' : 'Create your GridWise account'}
+                {mode === 'signin' ? 'Welcome back' : 'Create your GridWiser account'}
               </h2>
               <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">
                 {mode === 'signin'

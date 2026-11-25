@@ -39,7 +39,7 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
       backgroundColor: template.tokens.canvasBg,
     });
     const link = document.createElement('a');
-    link.download = `${(timetable.meta.title || 'gridwise-timetable').toLowerCase().replace(/\s+/g, '-')}.png`;
+    link.download = `${(timetable.meta.title || 'gridwiser-timetable').toLowerCase().replace(/\s+/g, '-')}.png`;
     link.href = dataUrl;
     link.click();
   };
@@ -50,7 +50,7 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${(timetable.meta.title || 'gridwise-timetable').toLowerCase().replace(/\s+/g, '-')}.ics`;
+    link.download = `${(timetable.meta.title || 'gridwiser-timetable').toLowerCase().replace(/\s+/g, '-')}.ics`;
     link.click();
     URL.revokeObjectURL(url);
   };

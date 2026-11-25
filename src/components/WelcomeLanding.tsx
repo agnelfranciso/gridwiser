@@ -160,7 +160,7 @@ export function WelcomeLanding({
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] bg-white/[0.02] px-5 py-3">
                 <div className="flex items-center gap-2 font-mono text-[11px] text-zinc-400">
                   <Clock className="h-3.5 w-3.5 text-blue-400" />
-                  <span>gridwise.studio · {activePreviewTpl.name}</span>
+                  <span>gridwiser.studio · {activePreviewTpl.name}</span>
                 </div>
 
                 <div className="flex items-center gap-1">
@@ -565,7 +565,7 @@ export function WelcomeLanding({
           </div>
 
           <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/[0.06] pt-6 text-[11px] text-zinc-500 sm:flex-row">
-            <p>© 2026 GridWise Studio. Built for students, engineers, and educators.</p>
+            <p>© 2026 GridWiser Studio. Built for students, engineers, and educators.</p>
             <div className="flex items-center gap-6">
               <a href="/legal" className="hover:text-zinc-300">
                 Terms & Privacy

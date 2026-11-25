@@ -259,9 +259,9 @@ export function generateICSFromSubjects(
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//GridWise//Timetable Studio//EN',
+    'PRODID:-//GridWiser//Timetable Studio//EN',
     'CALSCALE:GREGORIAN',
-    `X-WR-CALNAME:${escapeICS(meta.title || 'GridWise Timetable')}`,
+    `X-WR-CALNAME:${escapeICS(meta.title || 'GridWiser Timetable')}`,
   ];
 
   for (const subj of subjects) {
@@ -271,7 +271,7 @@ export function generateICSFromSubjects(
 
       const summary = subj.code ? `${subj.code}: ${subj.name}` : subj.name;
       lines.push('BEGIN:VEVENT');
-      lines.push(`UID:${occ.id}@gridwise.app`);
+      lines.push(`UID:${occ.id}@gridwiser.app`);
       lines.push(`DTSTART:${fmtDate(eventDate, occ.startTime)}`);
       lines.push(`DTEND:${fmtDate(eventDate, occ.endTime)}`);
       lines.push('RRULE:FREQ=WEEKLY;COUNT=16');

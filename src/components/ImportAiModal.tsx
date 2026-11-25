@@ -105,7 +105,7 @@ export function ImportAiModal({ open, onClose, onImport }: ImportAiModalProps) {
             <div>
               <h3 className="text-sm font-semibold text-white">Import Using AI</h3>
               <p className="text-xs text-zinc-500">
-                Convert any timetable image, PDF, or text into GridWise JSON with your favorite AI.
+                Convert any timetable image, PDF, or text into GridWiser JSON with your favorite AI.
               </p>
             </div>
           </div>

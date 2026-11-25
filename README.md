@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="./public/gridwise-oauth-logo.png" alt="GridWise Logo" width="72" height="72" />
-  <h1>GridWise</h1>
+  <img src="./public/gridwise-oauth-logo.png" alt="GridWiser Logo" width="72" height="72" />
+  <h1>GridWiser</h1>
   <p>
     <strong>Modern Timetable UI Studio</strong> — Build conflict-free weekly schedules, preview 12 handcrafted architectural templates, import via AI, and export print-ready PNG, PDF, .ICS, and daily poster packs.
   </p>

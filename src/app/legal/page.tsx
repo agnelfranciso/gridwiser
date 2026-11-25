@@ -4,9 +4,9 @@ import { ArrowLeft, Shield, Lock, FileText, Scale, UserCheck } from 'lucide-reac
 import { GridWiseBrand } from '@/components/GridWiseLogo';
 
 export const metadata: Metadata = {
-  title: 'Legal, Terms & Privacy – GridWise',
+  title: 'Legal, Terms & Privacy – GridWiser',
   description:
-    'Terms of Service, Privacy Policy, and Data Controls for GridWise timetable studio.',
+    'Terms of Service, Privacy Policy, and Data Controls for GridWiser timetable studio.',
 };
 
 export default function LegalPage() {
@@ -49,7 +49,7 @@ export default function LegalPage() {
             Terms of Service & Privacy Policy
           </h1>
           <p className="mt-2 text-xs text-zinc-400 sm:text-sm">
-            Effective November 25, 2026 · Plain-language overview of how GridWise handles your schedules and account.
+            Effective November 25, 2026 · Plain-language overview of how GridWiser handles your schedules and account.
           </p>
         </div>
 
@@ -86,10 +86,10 @@ export default function LegalPage() {
             <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#090B10] p-5 text-zinc-400 sm:p-6">
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  1.1 Using GridWise
+                  1.1 Using GridWiser
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  GridWise provides a web-based timetable builder, preset design templates, and export tools (PNG, PDF, .ICS, .JSON, and .ZIP) for personal, academic, and organizational scheduling. By accessing or signing into GridWise, you agree to use the service lawfully and not attempt to disrupt, scrape, or abuse shared endpoints.
+                  GridWiser provides a web-based timetable builder, preset design templates, and export tools (PNG, PDF, .ICS, .JSON, and .ZIP) for personal, academic, and organizational scheduling. By accessing or signing into GridWiser, you agree to use the service lawfully and not attempt to disrupt, scrape, or abuse shared endpoints.
                 </p>
               </div>
 
@@ -98,7 +98,7 @@ export default function LegalPage() {
                   1.2 Ownership of Your Schedules
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  You retain full ownership of all timetable titles, subjects, course codes, room locations, instructor names, and timings you enter. GridWise claims no intellectual property rights over your schedule data.
+                  You retain full ownership of all timetable titles, subjects, course codes, room locations, instructor names, and timings you enter. GridWiser claims no intellectual property rights over your schedule data.
                 </p>
               </div>
 
@@ -107,7 +107,7 @@ export default function LegalPage() {
                   1.3 Public Share Links
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  If you choose to click <strong>Share</strong>, GridWise creates a public, read-only snapshot of that timetable accessible to anyone who holds the generated URL. Your personal email address and Google display name are never included in public share snapshots. Deleting the schedule from your account automatically revokes its share link.
+                  If you choose to click <strong>Share</strong>, GridWiser creates a public, read-only snapshot of that timetable accessible to anyone who holds the generated URL. Your personal email address and Google display name are never included in public share snapshots. Deleting the schedule from your account automatically revokes its share link.
                 </p>
               </div>
 
@@ -116,7 +116,7 @@ export default function LegalPage() {
                   1.4 Service Availability
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  GridWise is provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis. We recommend keeping a local backup using the JSON export feature in Account Settings or the Studio toolbar.
+                  GridWiser is provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis. We recommend keeping a local backup using the JSON export feature in Account Settings or the Studio toolbar.
                 </p>
               </div>
             </div>
@@ -133,7 +133,7 @@ export default function LegalPage() {
                   2.1 Information We Store When You Sign In
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  GridWise uses Google OAuth exclusively—we never ask for, process, or store passwords. When you sign in, we store:
+                  GridWiser uses Google OAuth exclusively—we never ask for, process, or store passwords. When you sign in, we store:
                 </p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
                   <li>
@@ -150,7 +150,7 @@ export default function LegalPage() {
                   2.2 AI Import & File Exports Run Locally in Your Browser
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  When you use <strong>Import Using AI</strong>, GridWise copies a structured prompt for you to use in your own AI tool and parses the pasted JSON locally inside your browser. Your timetable images or PDFs are not uploaded to GridWise servers. Similarly, all PNG, PDF, .ICS, .JSON, and .ZIP exports are rendered 100% client-side on your device.
+                  When you use <strong>Import Using AI</strong>, GridWiser copies a structured prompt for you to use in your own AI tool and parses the pasted JSON locally inside your browser. Your timetable images or PDFs are not uploaded to GridWiser servers. Similarly, all PNG, PDF, .ICS, .JSON, and .ZIP exports are rendered 100% client-side on your device.
                 </p>
               </div>
 
@@ -194,7 +194,7 @@ export default function LegalPage() {
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
                   <li>Download a complete JSON backup of all saved schedules.</li>
                   <li>Delete all saved timetables and revoke all public share links at once.</li>
-                  <li>Permanently delete your GridWise profile and disconnect your Google account.</li>
+                  <li>Permanently delete your GridWiser profile and disconnect your Google account.</li>
                 </ul>
               </div>
             </div>
@@ -203,7 +203,7 @@ export default function LegalPage() {
 
         {/* Bottom Actions */}
         <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.08] pt-8">
-          <p className="text-xs text-zinc-500">© 2026 GridWise Studio.</p>
+          <p className="text-xs text-zinc-500">© 2026 GridWiser Studio.</p>
           <div className="flex items-center gap-3">
             <Link
               href="/account"

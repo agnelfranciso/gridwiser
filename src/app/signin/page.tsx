@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { SignInPage } from '@/components/SignInPage';
 
 export const metadata: Metadata = {
-  title: 'Sign In – GridWise',
+  title: 'Sign In – GridWiser',
   description: 'Sign in with your Google account to access your saved timetables.',
 };
 

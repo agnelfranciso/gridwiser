@@ -82,8 +82,8 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL || 'https://gridwise-studio-2026.web.app'
   ),
   title: {
-    default: 'GridWise — Modern Timetable UI Studio',
-    template: '%s | GridWise',
+    default: 'GridWiser — Modern Timetable UI Studio',
+    template: '%s | GridWiser',
   },
   description:
     'Enter your subjects and weekly timings, preview 12 handcrafted preset templates, resolve overlaps, and export print-ready PNG, PDF, .ICS, and daily poster schedules.',
@@ -93,19 +93,19 @@ export const metadata: Metadata = {
     'weekly timetable builder',
     'student schedule planner',
     'AI timetable import',
-    'GridWise',
+    'GridWiser',
   ],
   openGraph: {
     type: 'website',
-    siteName: 'GridWise',
-    title: 'GridWise — Modern Timetable UI Studio',
+    siteName: 'GridWiser',
+    title: 'GridWiser — Modern Timetable UI Studio',
     description:
       'Build conflict-free weekly timetables with 12 architectural themes, AI schedule import, and instant PNG, PDF, and .ICS exports.',
-    images: [{ url: '/gridwise-oauth-logo.png', width: 120, height: 120, alt: 'GridWise Logo' }],
+    images: [{ url: '/gridwise-oauth-logo.png', width: 120, height: 120, alt: 'GridWiser Logo' }],
   },
   twitter: {
     card: 'summary',
-    title: 'GridWise — Modern Timetable UI Studio',
+    title: 'GridWiser — Modern Timetable UI Studio',
     description:
       'Build conflict-free weekly timetables with 12 architectural themes, AI import, and instant PNG, PDF, and .ICS exports.',
     images: ['/gridwise-oauth-logo.png'],

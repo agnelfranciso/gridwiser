@@ -95,7 +95,7 @@ export function AccountSettingsPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'gridwise-account-backup.json';
+      link.download = 'gridwiser-account-backup.json';
       link.click();
       URL.revokeObjectURL(url);
       setStatusMsg({
@@ -281,7 +281,7 @@ export function AccountSettingsPage() {
                 )}
                 <div>
                   <h2 className="text-base font-semibold text-white">
-                    {user.displayName || 'GridWise User'}
+                    {user.displayName || 'GridWiser User'}
                   </h2>
                   <p className="text-xs text-zinc-400">{user.email}</p>
                   <div className="mt-1.5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] text-zinc-300">
@@ -374,7 +374,7 @@ export function AccountSettingsPage() {
                 <div>
                   <h3 className="text-sm font-medium text-white">Delete Account Permanently</h3>
                   <p className="mt-0.5 text-xs text-zinc-400">
-                    Deletes your GridWise profile, all saved timetables, share links, and disconnects your Google account. This cannot be undone.
+                    Deletes your GridWiser profile, all saved timetables, share links, and disconnects your Google account. This cannot be undone.
                   </p>
                 </div>
                 {!confirmDeleteAccount && (

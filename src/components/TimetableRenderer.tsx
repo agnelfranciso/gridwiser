@@ -1871,7 +1871,7 @@ export function TimetableRenderer({
                 className="text-lg font-extrabold tracking-tighter"
                 style={{ color: tokens.text, fontFamily: fontDisplay }}
               >
-                GRIDWISE
+                GRIDWISER
               </span>
             </div>
           </div>
@@ -2061,7 +2061,7 @@ export function TimetableRenderer({
                 className="text-2xl font-black tracking-tighter"
                 style={{ color: tokens.text, fontFamily: fontDisplay }}
               >
-                GRIDWISE
+                GRIDWISER
               </div>
               <div className="text-right leading-tight" style={{ color: tokens.text }}>
                 <div className="text-[11px] font-bold uppercase tracking-wide">
@@ -2181,7 +2181,7 @@ export function TimetableRenderer({
               tone={template.mode === 'light' ? 'light' : 'dark'}
               accentColor={tokens.accent}
             />
-            GridWise
+            GridWiser
           </span>
         </div>
       </div>

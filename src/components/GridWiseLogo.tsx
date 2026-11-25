@@ -99,7 +99,7 @@ export function GridWiseBrand({
       <GridWiseLogoMark size={iconSize} tone={tone} accentColor={accentColor} />
       <div className="flex flex-col leading-none">
         <span className={`font-semibold tracking-tight ${textSize} ${textColor}`}>
-          GridWise
+          GridWiser
         </span>
         {subtitle && (
           <span className="mt-0.5 text-[10px] text-zinc-400">{subtitle}</span>
