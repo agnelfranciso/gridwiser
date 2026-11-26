@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -239,6 +240,7 @@ const AVAILABLE_FONTS: Array<{ id: TemplateFontFamily; label: string }> = [
 ];
 
 export function ThemeCreatorStudio() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'colors' | 'layout' | 'typography' | 'saved'>('colors');
 
@@ -276,7 +278,26 @@ export function ThemeCreatorStudio() {
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [stageBackdrop, setStageBackdrop] = useState<'dark' | 'light'>('dark');
+  const [pendingLeaveHref, setPendingLeaveHref] = useState<string | null>(null);
+  const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string>(() =>
+    JSON.stringify(template)
+  );
   const [toast, setToast] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  const hasUnsavedChanges = useMemo(
+    () => JSON.stringify(template) !== lastSavedSnapshot,
+    [lastSavedSnapshot, template]
+  );
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const showToast = (text: string, type: 'ok' | 'err' = 'ok') => {
     setToast({ text, type });
@@ -302,6 +323,7 @@ export function ThemeCreatorStudio() {
             if (match) {
               setTemplate(match);
               setShareId(match.shareId ?? null);
+              setLastSavedSnapshot(JSON.stringify(match));
               showToast(`Loaded "${match.name}" for editing`);
             }
           }
@@ -362,6 +384,7 @@ export function ThemeCreatorStudio() {
         );
       }
       setTemplate(savedDraft);
+      setLastSavedSnapshot(JSON.stringify(savedDraft));
       if (typeof window !== 'undefined') {
         window.history.replaceState({}, '', `/theme-creator?edit=${encodeURIComponent(templateId)}`);
       }
@@ -511,13 +534,20 @@ export function ThemeCreatorStudio() {
         {/* Top Navbar */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[#1E1E24] bg-[#0E0E12]/90 px-4 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
+            <button
+              type="button"
+              onClick={() => {
+                if (hasUnsavedChanges) {
+                  setPendingLeaveHref('/');
+                } else {
+                  router.push('/');
+                }
+              }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#26262F] bg-[#141418] px-2.5 py-1.5 text-xs text-zinc-300 transition hover:border-zinc-500 hover:text-white"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Studio</span>
-            </Link>
+            </button>
             <div className="h-4 w-px bg-zinc-800" />
             <div className="flex items-center gap-2.5">
               <Palette className="h-4 w-4 text-blue-400" />
@@ -1234,6 +1264,56 @@ export function ThemeCreatorStudio() {
             </div>
           </main>
         </div>
+
+        {/* Unsaved Changes Modal */}
+        <AnimatedModalShell
+          open={Boolean(pendingLeaveHref)}
+          onClose={() => setPendingLeaveHref(null)}
+          zIndexClass="z-50"
+        >
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/15 bg-[#0A0D16] p-6 shadow-2xl">
+            <h3 className="text-base font-semibold text-white">
+              Unsaved Theme Changes
+            </h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">
+              You have unsaved changes to &ldquo;{template.name || 'Untitled Theme'}&rdquo;. Save before returning to Studio?
+            </p>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingLeaveHref(null)}
+                className="rounded-lg border border-[#262634] bg-[#14141C] px-3.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-zinc-500"
+              >
+                Keep Editing
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const target = pendingLeaveHref;
+                  setPendingLeaveHref(null);
+                  if (target) router.push(target);
+                }}
+                className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3.5 py-1.5 text-xs font-medium text-rose-300 transition hover:bg-rose-500/20"
+              >
+                Discard &amp; Leave
+              </button>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={async () => {
+                  const target = pendingLeaveHref;
+                  await handleSaveTemplate();
+                  setPendingLeaveHref(null);
+                  if (target) router.push(target);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-1.5 text-xs font-semibold text-[#09090B] transition hover:bg-zinc-200 disabled:opacity-60"
+              >
+                <Save className="h-3.5 w-3.5" />
+                {isSaving ? 'Saving...' : 'Save & Leave'}
+              </button>
+            </div>
+          </div>
+        </AnimatedModalShell>
 
         {/* Share Modal */}
         <AnimatedModalShell

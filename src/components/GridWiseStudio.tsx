@@ -138,6 +138,19 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   const [sharingTemplateId, setSharingTemplateId] = useState<string | null>(null);
   const [sharedTemplateModalUrl, setSharedTemplateModalUrl] = useState<string | null>(null);
   const [copiedTemplateShareUrl, setCopiedTemplateShareUrl] = useState(false);
+  const [pendingLeaveHref, setPendingLeaveHref] = useState<string | null>(null);
+  const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string>(() =>
+    JSON.stringify({
+      meta: initialRecord?.meta ?? {
+        title: '',
+        subtitle: '',
+        timeFormat: '24h',
+        showWeekend: false,
+      },
+      subjects: initialRecord?.subjects ?? [],
+      templateId: initialRecord?.templateId ?? 'cron-studio',
+    })
+  );
   const customTemplates = useMemo(
     () => customTemplateDefs.map(toPresetTemplate),
     [customTemplateDefs]
@@ -186,6 +199,37 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   useEffect(() => { metaRef.current = meta; }, [meta]);
   useEffect(() => { subjectsRef.current = subjects; }, [subjects]);
   useEffect(() => { templateIdRef.current = templateId; }, [templateId]);
+
+  const currentSnapshot = useMemo(
+    () => JSON.stringify({ meta, subjects, templateId }),
+    [meta, subjects, templateId]
+  );
+
+  const hasUnsavedChanges = useMemo(
+    () => viewMode === 'studio' && subjects.length > 0 && currentSnapshot !== lastSavedSnapshot,
+    [currentSnapshot, lastSavedSnapshot, subjects.length, viewMode]
+  );
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  const navigateSafely = useCallback(
+    (href: string) => {
+      if (hasUnsavedChanges) {
+        setPendingLeaveHref(href);
+        return;
+      }
+      router.push(href);
+    },
+    [hasUnsavedChanges, router]
+  );
 
   const showToast = useCallback((text: string, type: 'ok' | 'err' = 'ok') => {
     setToast({ text, type });
@@ -442,6 +486,13 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                 setTemplateId(rec.templateId);
                 setSavedId(rec.id);
                 setShareId(rec.shareId ?? null);
+                setLastSavedSnapshot(
+                  JSON.stringify({
+                    meta: rec.meta,
+                    subjects: rec.subjects,
+                    templateId: rec.templateId,
+                  })
+                );
                 setActiveNav('timetable');
               }
             })
@@ -660,10 +711,13 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
       );
       setSavedId(res.id);
       setShareId(res.shareId);
+      setLastSavedSnapshot(JSON.stringify({ meta, subjects, templateId }));
       fetchSavedList(user.uid);
       showToast('Saved to your cloud library!');
+      return true;
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Save failed', 'err');
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -1197,8 +1251,9 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                     badge={savedList.length > 0 ? String(savedList.length) : undefined}
                     onClick={() => handleNavClick('saved')}
                   />
-                  <Link
-                    href="/theme-creator"
+                  <button
+                    type="button"
+                    onClick={() => navigateSafely('/theme-creator')}
                     className="flex w-full items-center justify-between overflow-hidden rounded-lg px-2.5 py-2 text-xs font-medium text-zinc-400 transition hover:bg-[#18181E] hover:text-white"
                   >
                     <span className="flex items-center gap-2.5">
@@ -1208,7 +1263,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                     <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-blue-400">
                       NEW
                     </span>
-                  </Link>
+                  </button>
                 </nav>
 
                 <div className="space-y-2 px-1">
@@ -1278,7 +1333,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                   <div className="rounded-xl border border-[#1E1E24] bg-[#121215] p-3">
                     <button
                       type="button"
-                      onClick={() => router.push('/account')}
+                      onClick={() => navigateSafely('/account')}
                       title="Open Account Settings"
                       className="flex w-full items-center gap-2.5 rounded-lg p-1 text-left transition hover:bg-white/[0.05]"
                     >
@@ -1400,7 +1455,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                                 type="button"
                                 onClick={() => {
                                   setUserMenuOpen(false);
-                                  router.push('/account');
+                                  navigateSafely('/account');
                                 }}
                                 className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-zinc-200 transition hover:bg-[#1C1D26]"
                               >
@@ -1411,7 +1466,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                                 type="button"
                                 onClick={() => {
                                   setUserMenuOpen(false);
-                                  router.push('/about');
+                                  navigateSafely('/about');
                                 }}
                                 className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-zinc-200 transition hover:bg-[#1C1D26]"
                               >
@@ -1639,13 +1694,14 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Link
-                            href="/theme-creator"
+                          <button
+                            type="button"
+                            onClick={() => navigateSafely('/theme-creator')}
                             className="hidden items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3.5 py-2 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20 lg:inline-flex"
                           >
                             <Palette className="h-3.5 w-3.5" />
                             Create Your Template
-                          </Link>
+                          </button>
                           <button
                             type="button"
                             onClick={handleGenerate}
@@ -2419,6 +2475,66 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
           ))}
         </div>
       )}
+
+      {/* Unsaved Changes Warning Modal */}
+      <AnimatedModalShell
+        open={Boolean(pendingLeaveHref)}
+        onClose={() => setPendingLeaveHref(null)}
+        zIndexClass="z-50"
+      >
+        <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/15 bg-[#080B12] p-6 shadow-2xl">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-300">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-white">
+                Unsaved Timetable Changes
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                You have unsaved edits in your current timetable. Would you like to save them to your account before leaving?
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingLeaveHref(null)}
+              className="rounded-lg border border-[#262632] bg-[#14141C] px-3.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-zinc-500"
+            >
+              Stay Here
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const target = pendingLeaveHref;
+                setPendingLeaveHref(null);
+                if (target) router.push(target);
+              }}
+              className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3.5 py-1.5 text-xs font-medium text-rose-300 transition hover:bg-rose-500/20"
+            >
+              Discard &amp; Leave
+            </button>
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={async () => {
+                const target = pendingLeaveHref;
+                const ok = await handleSaveToCloud();
+                if (ok && target) {
+                  setPendingLeaveHref(null);
+                  router.push(target);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-1.5 text-xs font-semibold text-[#09090B] transition hover:bg-zinc-200 disabled:opacity-60"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {isSaving ? 'Saving...' : 'Save & Leave'}
+            </button>
+          </div>
+        </div>
+      </AnimatedModalShell>
 
       {/* Google One Tap for signed-out visitors */}
       <GoogleOneTap
