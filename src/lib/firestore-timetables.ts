@@ -16,7 +16,11 @@ import { db } from '@/lib/firebase';
 import { getPresetTemplate } from '@/lib/themes';
 import type {
   CustomTemplateDefinition,
+  ExamEntry,
+  ExamTimetableMeta,
   PresetTemplateId,
+  SavedExamTimetableRecord,
+  SavedExamTimetableSummary,
   SavedTimetableRecord,
   SavedTimetableSummary,
   SubjectEntry,
@@ -506,4 +510,130 @@ export async function getSharedCustomTemplate(
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),
   };
+}
+
+// ===============================================================
+// Exam Timetables Management (Private Only — Never Shared)
+// ===============================================================
+
+export async function listUserExamTimetables(
+  uid: string
+): Promise<SavedExamTimetableSummary[]> {
+  const colRef = collection(db, 'users', uid, 'exam_timetables');
+  const q = query(colRef, orderBy('updatedAt', 'desc'));
+  const snap = await getDocs(q);
+
+  return snap.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      title: String(data.title || 'Untitled Exam Schedule'),
+      subtitle: String(data.subtitle || ''),
+      templateId: (data.templateId ?? 'cron-studio') as PresetTemplateId,
+      examCount: Array.isArray(data.exams) ? data.exams.length : 0,
+      createdAt: toIsoString(data.createdAt),
+      updatedAt: toIsoString(data.updatedAt),
+    };
+  });
+}
+
+export async function getUserExamTimetable(
+  uid: string,
+  examId: string
+): Promise<SavedExamTimetableRecord | null> {
+  const ref = doc(db, 'users', uid, 'exam_timetables', examId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  const data = snap.data();
+
+  return {
+    id: snap.id,
+    meta: (data.meta ?? {
+      title: data.title ?? 'Untitled Exam Schedule',
+      subtitle: data.subtitle ?? '',
+      timeFormat: '12h',
+    }) as ExamTimetableMeta,
+    exams: (data.exams ?? []) as ExamEntry[],
+    templateId: (data.templateId ?? 'cron-studio') as PresetTemplateId,
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+}
+
+export async function saveUserExamTimetable(
+  uid: string,
+  input: {
+    meta: ExamTimetableMeta;
+    exams: ExamEntry[];
+    templateId: PresetTemplateId;
+  },
+  existingId?: string | null
+): Promise<string> {
+  const id = existingId ?? `exam-${generateRandomId(6)}`;
+  const ref = doc(db, 'users', uid, 'exam_timetables', id);
+
+  let createdAtValue: unknown = serverTimestamp();
+  if (existingId) {
+    const existingSnap = await getDoc(ref);
+    if (existingSnap.exists()) {
+      createdAtValue = existingSnap.data().createdAt ?? serverTimestamp();
+    }
+  }
+
+  const cleanMeta: ExamTimetableMeta = {
+    title: (input.meta.title || 'Untitled Exam Schedule').slice(0, 120),
+    subtitle: (input.meta.subtitle || '').slice(0, 160),
+    timeFormat: input.meta.timeFormat === '24h' ? '24h' : '12h',
+  };
+
+  await setDoc(ref, {
+    ownerUid: uid,
+    title: cleanMeta.title,
+    subtitle: cleanMeta.subtitle,
+    templateId: input.templateId,
+    meta: cleanMeta,
+    exams: input.exams.slice(0, 60),
+    createdAt: createdAtValue,
+    updatedAt: serverTimestamp(),
+  });
+
+  return id;
+}
+
+export async function duplicateUserExamTimetable(
+  uid: string,
+  sourceId: string
+): Promise<SavedExamTimetableRecord | null> {
+  const source = await getUserExamTimetable(uid, sourceId);
+  if (!source) return null;
+
+  const copyMeta: ExamTimetableMeta = {
+    ...source.meta,
+    title: `${source.meta.title} (Copy)`.slice(0, 120),
+  };
+  const newId = await saveUserExamTimetable(
+    uid,
+    {
+      meta: copyMeta,
+      exams: source.exams,
+      templateId: source.templateId,
+    },
+    null
+  );
+
+  return {
+    id: newId,
+    meta: copyMeta,
+    exams: source.exams,
+    templateId: source.templateId,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export async function deleteUserExamTimetable(
+  uid: string,
+  examId: string
+): Promise<void> {
+  await deleteDoc(doc(db, 'users', uid, 'exam_timetables', examId));
 }

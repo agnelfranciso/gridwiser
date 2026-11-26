@@ -36,6 +36,7 @@ import {
   User as UserIcon,
   Loader2,
   Pencil,
+  GraduationCap,
 } from 'lucide-react';
 import {
   ALL_DAYS,
@@ -73,6 +74,7 @@ import {
 } from '@/lib/schedule-engine';
 import { SubjectEntryBuilder } from '@/components/SubjectEntryBuilder';
 import { TimetableRenderer } from '@/components/TimetableRenderer';
+import { ExamTimetableStudio } from '@/components/ExamTimetableStudio';
 import { OnboardingWizard } from '@/components/OnboardingWizard';
 import { WelcomeLanding } from '@/components/WelcomeLanding';
 import { ImportAiModal } from '@/components/ImportAiModal';
@@ -90,7 +92,7 @@ import {
 } from '@/components/MotionPrimitives';
 
 type ViewMode = 'welcome' | 'onboarding' | 'studio' | 'login-gate';
-type StudioNav = 'subjects' | 'templates' | 'timetable' | 'saved';
+type StudioNav = 'subjects' | 'templates' | 'timetable' | 'exams' | 'saved';
 
 interface GridWiseStudioProps {
   initialRecord?: SavedTimetableRecord | null;
@@ -1183,6 +1185,12 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                     onClick={() => handleNavClick('timetable')}
                   />
                   <SidebarNavButton
+                    active={activeNav === 'exams'}
+                    icon={<GraduationCap className="h-4 w-4" />}
+                    label="Exam Timetable"
+                    onClick={() => handleNavClick('exams')}
+                  />
+                  <SidebarNavButton
                     active={activeNav === 'saved'}
                     icon={<FolderOpen className="h-4 w-4" />}
                     label="Saved Schedules"
@@ -2047,6 +2055,25 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                     </motion.div>
                   )}
 
+                  {activeNav === 'exams' && (
+                    <motion.div
+                      key="tab-exams"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={TRANSITION_VIEW}
+                    >
+                      <ExamTimetableStudio
+                        user={user}
+                        allTemplates={allTemplates}
+                        savedTimetables={savedList}
+                        currentSubjects={subjects}
+                        initialTemplateId={templateId}
+                        onToast={showToast}
+                      />
+                    </motion.div>
+                  )}
+
                   {activeNav === 'saved' && (
                     <motion.div
                       key="tab-saved"
@@ -2173,12 +2200,13 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
             </div>
 
             {/* Fixed Bottom Navigation Bar on Mobile */}
-            <nav className="no-print fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 gap-1 border-t border-[#1E1E26] bg-[#0A0A0E]/95 px-2 py-1.5 backdrop-blur-xl lg:hidden">
+            <nav className="no-print fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 gap-1 border-t border-[#1E1E26] bg-[#0A0A0E]/95 px-2 py-1.5 backdrop-blur-xl lg:hidden">
               {(
                 [
                   { id: 'subjects', label: 'Subjects', icon: Calendar },
                   { id: 'templates', label: 'Themes', icon: Palette },
                   { id: 'timetable', label: 'Timetable', icon: LayoutGrid },
+                  { id: 'exams', label: 'Exams', icon: GraduationCap },
                   { id: 'saved', label: 'Saved', icon: FolderOpen },
                 ] as const
               ).map(({ id, label, icon: Icon }) => {

@@ -217,3 +217,44 @@ export function toPresetTemplate(c: CustomTemplateDefinition): PresetTemplate {
     tokens: c.tokens,
   };
 }
+
+export type ExamType = 'Midterm' | 'Final' | 'Practical' | 'Viva' | 'Quiz';
+
+export interface ExamEntry {
+  id: string;
+  subjectName: string;
+  courseCode: string;
+  examDate: string; // YYYY-MM-DD
+  startTime: string; // HH:MM
+  endTime: string; // HH:MM
+  venue: string;
+  seatNumber?: string;
+  examType?: ExamType;
+  notes?: string;
+  accentDot: string;
+}
+
+export interface ExamTimetableMeta {
+  title: string;
+  subtitle: string;
+  timeFormat: '12h' | '24h';
+}
+
+export interface SavedExamTimetableSummary {
+  id: string;
+  title: string;
+  subtitle: string;
+  templateId: PresetTemplateId;
+  examCount: number;
+  updatedAt: string;
+  createdAt: string;
+}
+
+export interface SavedExamTimetableRecord {
+  id: string;
+  meta: ExamTimetableMeta;
+  exams: ExamEntry[];
+  templateId: PresetTemplateId;
+  createdAt: string;
+  updatedAt: string;
+}
