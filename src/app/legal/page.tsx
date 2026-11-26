@@ -10,13 +10,15 @@ import {
   Globe,
   AlertTriangle,
   Database,
+  CheckCircle2,
+  Mail,
 } from 'lucide-react';
 import { GridWiseBrand } from '@/components/GridWiseLogo';
 
 export const metadata: Metadata = {
   title: 'Legal, Terms & Privacy – GridWiser',
   description:
-    'Comprehensive Terms of Service, Privacy Policy (GDPR, CCPA/CPRA, DPDP, and Google API Limited Use Disclosure), Acceptable Use Policy, and Security Disclosures for GridWiser.',
+    'Terms of Service, Privacy Policy (India DPDP Act, GDPR, CCPA/CPRA, and Google API Limited Use Disclosure), Acceptable Use Policy, and Security Disclosures for GridWiser.',
 };
 
 export default function LegalPage() {
@@ -58,7 +60,7 @@ export default function LegalPage() {
       {/* Main Container */}
       <main className="relative z-10 mx-auto max-w-4xl px-5 py-10 sm:px-6 lg:py-14">
         {/* Title */}
-        <div className="mb-10 border-b border-white/[0.08] pb-8">
+        <div className="mb-8 border-b border-white/[0.08] pb-7">
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-400">
             <Scale className="h-3.5 w-3.5" />
             Legal Framework, Compliance &amp; User Rights
@@ -67,9 +69,23 @@ export default function LegalPage() {
             Terms of Service &amp; Privacy Policy
           </h1>
           <p className="mt-2 text-xs text-zinc-400 sm:text-sm">
-            Effective Date: November 25, 2026 · Last Updated: November 25, 2026 · Applies to GridWiser Studio, Theme Creator, and Public Share Links.
+            Effective Date: November 26, 2026 · Last Updated: November 26, 2026 · Applies to GridWiser Studio, Exam Timetable Generator, Theme Creator, and Public Share Links.
           </p>
         </div>
+
+        {/* Plain-Language Summary Box */}
+        <section className="mb-8 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.05] p-5 sm:p-6">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-300">
+            <CheckCircle2 className="h-4 w-4" />
+            In Plain English (Quick Summary)
+          </div>
+          <ul className="mt-3 grid gap-2 text-xs leading-relaxed text-zinc-300 sm:grid-cols-2">
+            <li>• We store only your Google name, email, avatar, and the timetables/themes you save.</li>
+            <li>• We use privacy-friendly, cookieless Vercel Web Analytics for aggregate traffic counts only.</li>
+            <li>• We never sell your data, run ads, or train AI models on your schedules.</li>
+            <li>• You can export all your data as JSON or delete your account anytime in Settings.</li>
+          </ul>
+        </section>
 
         {/* Quick Nav Badges */}
         <div className="mb-10 flex flex-wrap gap-2">
@@ -92,7 +108,7 @@ export default function LegalPage() {
             className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#090C13] px-3.5 py-2 text-xs font-medium text-zinc-300 transition hover:border-blue-500/40 hover:text-white"
           >
             <Globe className="h-3.5 w-3.5 text-violet-400" />
-            3. Global Privacy Rights
+            3. Privacy Rights &amp; Retention
           </a>
           <a
             href="#security"
@@ -106,7 +122,7 @@ export default function LegalPage() {
             className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#090C13] px-3.5 py-2 text-xs font-medium text-zinc-300 transition hover:border-blue-500/40 hover:text-white"
           >
             <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
-            5. Liability &amp; Governing Terms
+            5. Liability &amp; Governing Law
           </a>
         </div>
 
@@ -118,37 +134,37 @@ export default function LegalPage() {
             <div className="space-y-5 rounded-2xl border border-white/[0.08] bg-[#090B10] p-5 text-zinc-400 sm:p-6">
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  1.1 Acceptance of Terms &amp; Eligibility
+                  1.1 Acceptance of Terms &amp; Age Eligibility
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  By accessing, browsing, signing into, or using GridWiser (&ldquo;the Service&rdquo;), operated by Agnel Francis Olakkengil (&ldquo;Operator&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;), you agree to be bound by these Terms of Service and our Privacy Policy. You must be at least 13 years of age (or the minimum age of digital consent in your jurisdiction) to create an account or use cloud-sync features. If you do not agree to these Terms, please discontinue use of the Service.
+                  By accessing, signing into, or using GridWiser (&ldquo;the Service&rdquo;), operated by Agnel Francis Olakkengil (&ldquo;Operator&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;), you agree to these Terms of Service and our Privacy Policy. Under India&apos;s Digital Personal Data Protection (DPDP) Act, 2023, individuals under 18 years of age are treated as children and require verifiable parent or guardian consent for personal data processing. Accordingly, you must be at least <strong>18 years old</strong> to create a cloud-synced account independently, or if you are between 13 and 17, you may only use cloud sign-in with your parent or legal guardian&apos;s consent and supervision.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  1.2 License Grant &amp; Platform Intellectual Property
+                  1.2 Open-Source Code &amp; Service Use
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  Subject to your compliance with these Terms, we grant you a limited, personal, non-exclusive, non-transferable, revocable, royalty-free license to access and use GridWiser for personal, academic, and organizational scheduling. All underlying source code, user interface layouts, preset design templates, typography pairings, trademarks, and branding remain the exclusive intellectual property of GridWiser and its Operator.
+                  GridWiser&apos;s source code is publicly available under the <strong>MIT License</strong> (see the <code className="text-zinc-300">LICENSE</code> file in our GitHub repository). You are free to inspect, fork, and self-host the source code in accordance with the MIT License. Your use of our hosted instance at <code className="text-zinc-300">gridwiser.vercel.app</code> remains subject to the Acceptable Use rules below.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  1.3 User-Generated Content (Schedules &amp; Custom Themes)
+                  1.3 User-Generated Content (Schedules, Exams &amp; Custom Themes)
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  You retain 100% ownership and all intellectual property rights in the timetable titles, subject names, course codes, room numbers, instructor names, timings, and custom theme configurations (&ldquo;User Content&rdquo;) you create or import. By saving or sharing User Content on GridWiser, you grant us a strictly limited, worldwide, non-exclusive license to host, store, process, render, and—solely when you explicitly generate a public share link—display read-only snapshots of that content to operate the Service. You represent and warrant that your User Content does not infringe third-party rights or violate applicable laws.
+                  You retain 100% ownership and all intellectual property rights in the timetable titles, subjects, exam schedules, course codes, rooms, timings, and custom theme configurations (&ldquo;User Content&rdquo;) you create or import. By saving or sharing User Content on GridWiser, you grant us a strictly limited, non-exclusive license to host, store, render, and—solely when you explicitly generate a public share link—display read-only snapshots of that content to operate the Service. You represent that your User Content does not infringe third-party rights or violate applicable laws.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  1.4 Public Share Links &amp; Theme Remixing
+                  1.4 Public Share Links &amp; Theme Remixing Caveat
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  When you click <strong>Share</strong> on a timetable or custom theme, GridWiser creates a public, read-only snapshot accessible to anyone holding the generated unguessable URL (<code className="text-zinc-300">/share/[id]</code> or <code className="text-zinc-300">/template/[id]</code>). Your personal email address and private account credentials are never exposed in public share snapshots. Other users who view a shared custom theme may save a copy to their own account or remix it. Deleting a schedule or unpublishing a share link immediately revokes public access.
+                  When you click <strong>Share</strong> on a class timetable or custom theme, GridWiser creates a public, read-only snapshot accessible to anyone holding that URL (<code className="text-zinc-300">/share/[id]</code> or <code className="text-zinc-300">/template/[id]</code>) until you delete or unpublish it. Your email address and private account credentials are never included in public snapshots. Please note that anyone who views a shared link before you delete it—or who saves a copy, exports an image/PDF, or adds a shared custom theme to their own account—keeps that copy independently. Exam timetables are always private and cannot be shared.
                 </p>
               </div>
 
@@ -156,12 +172,11 @@ export default function LegalPage() {
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
                   1.5 Acceptable Use Policy (AUP)
                 </h3>
-                <p className="mt-1.5 text-xs leading-relaxed">You agree not to:</p>
+                <p className="mt-1.5 text-xs leading-relaxed">When using our hosted Service, you agree not to:</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
-                  <li>Attempt to bypass authentication, Firestore security rules, rate limits, or access another user&apos;s private data.</li>
-                  <li>Use automated bots, scrapers, or crawlers to harvest shared snapshots or overload our infrastructure.</li>
-                  <li>Upload, store, or share unlawful, defamatory, harassing, or malicious payloads (including XSS or script-injection attempts).</li>
-                  <li>Reverse-engineer, decompile, or resell the GridWiser platform as a competing commercial SaaS without written permission.</li>
+                  <li>Attempt to bypass authentication, Firestore security rules, or access another user&apos;s private data.</li>
+                  <li>Use automated bots or scrapers to harvest public snapshots or intentionally overload our hosting infrastructure.</li>
+                  <li>Upload, store, or share unlawful, defamatory, harassing, or malicious payloads (such as script-injection attempts).</li>
                 </ul>
               </div>
 
@@ -170,7 +185,7 @@ export default function LegalPage() {
                   1.6 AI Prompting &amp; Imported Schedule Accuracy
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  GridWiser provides structured prompts and client-side JSON parsers so you can use external or local AI models to extract schedules or generate custom themes. Because third-party and local AI outputs are probabilistic, GridWiser does not warrant the accuracy, completeness, or conflict-free status of any imported schedule. You are solely responsible for verifying class times, rooms, and exam dates against your institution&apos;s official records.
+                  GridWiser provides structured prompts and client-side JSON parsers so you can use external or local AI models to extract class/exam schedules or generate themes. Because AI outputs are probabilistic, GridWiser does not warrant the accuracy or completeness of any imported schedule. Always verify class times, exam dates, halls, and seat numbers against your institution&apos;s official records.
                 </p>
               </div>
             </div>
@@ -187,27 +202,30 @@ export default function LegalPage() {
                   2.1 Data Controller &amp; Categories of Data Collected
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  GridWiser acts as the Data Controller for account-level information. We collect only the minimum data necessary to deliver multi-device synchronization:
+                  GridWiser is operated by Agnel Francis Olakkengil. We collect only the minimum data needed to deliver multi-device sync:
                 </p>
                 <ul className="mt-2 list-disc space-y-1.5 pl-5 text-xs">
                   <li>
                     <strong className="text-zinc-200">Authentication &amp; Profile Data (Google OAuth):</strong> Unique Firebase/Google UID, display name, verified email address, and profile avatar URL. We never collect or store passwords.
                   </li>
                   <li>
-                    <strong className="text-zinc-200">User Content:</strong> Timetables, subjects, timings, selected layout presets, and custom theme tokens you explicitly save to your account.
+                    <strong className="text-zinc-200">User Content:</strong> Class timetables, exam schedules, subjects, timings, selected presets, and custom theme tokens you save to your account.
                   </li>
                   <li>
-                    <strong className="text-zinc-200">Essential Infrastructure &amp; Security Logs:</strong> Standard HTTP request metadata (IP address, browser user-agent, timestamps) processed transiently by our hosting and database providers for DDoS mitigation, error diagnostics, and abuse prevention.
+                    <strong className="text-zinc-200">Cookieless Aggregate Analytics (Vercel Web Analytics):</strong> We run privacy-friendly, cookieless Vercel Web Analytics to measure aggregate page views, referrer domains, and device/country counts without tracking individual users, storing cookies, or collecting personal identifiers.
+                  </li>
+                  <li>
+                    <strong className="text-zinc-200">Infrastructure Logs:</strong> Transient HTTP request metadata (IP address, user-agent, timestamps) processed by our hosting and database providers for security and error diagnostics.
                   </li>
                 </ul>
               </div>
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  2.2 Lawful Bases for Processing (GDPR Article 6)
+                  2.2 Lawful Bases for Processing
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  Where European Economic Area (EEA) or UK data protection law applies, we process personal data under: (a) <strong>Performance of a Contract</strong> (to authenticate you, sync your timetables, and generate share links at your request); (b) <strong>Legitimate Interests</strong> (to secure our platform, prevent abuse, and maintain reliability); and (c) <strong>Consent</strong> (where you voluntarily publish a public snapshot or sign in with Google).
+                  We process your personal data based on: (a) <strong>Contractual Necessity</strong> (to authenticate your account, sync your timetables and custom themes, and generate share links you request); (b) <strong>Consent</strong> (when you choose to sign in with Google or publish a public snapshot); and (c) <strong>Legitimate Interests</strong> (maintaining platform security, reliability, and aggregate cookieless analytics).
                 </p>
               </div>
 
@@ -225,66 +243,57 @@ export default function LegalPage() {
                   >
                     Google API Services User Data Policy
                   </a>
-                  , including the Limited Use requirements. Specifically, GridWiser does not use Google user data for targeted advertising, does not sell Google user data to data brokers, and does not use Google user data to train generalized AI or machine learning models.
+                  , including the Limited Use requirements. GridWiser does not use Google user data for targeted advertising, does not sell Google user data, and does not use Google user data to train AI or machine learning models.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  2.4 Client-Side Processing, Local AI &amp; Zero Ad Tracking
+                  2.4 Client-Side Exports &amp; Local AI Processing
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  All exports (3× Retina PNG, Print-Ready PDF, Phone/Desktop Wallpapers, <code className="text-zinc-300">.ICS</code> calendar files, <code className="text-zinc-300">.JSON</code> backups, and <code className="text-zinc-300">.ZIP</code> archives) and AI JSON parsing execute 100% locally inside your browser. Your timetable screenshots or PDFs are never uploaded to GridWiser servers. We do not use third-party advertising cookies, cross-site tracking pixels, or behavioral profiling.
+                  All exports (3× Retina PNG, Print-Ready PDF, Phone/Desktop Wallpapers, <code className="text-zinc-300">.ICS</code> calendar files, <code className="text-zinc-300">.JSON</code> backups, and <code className="text-zinc-300">.ZIP</code> archives) and AI JSON parsing execute 100% locally inside your browser. Your timetable screenshots or PDFs are never uploaded to GridWiser servers.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  2.5 Subprocessors &amp; International Data Transfers
+                  2.5 Subprocessors
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  To operate the Service reliably, we rely on vetted cloud subprocessors: <strong>Google Firebase</strong> (Authentication and Cloud Firestore database storage) and <strong>Vercel</strong> (global edge web hosting and delivery). Data is encrypted in transit via TLS 1.2+ and encrypted at rest by Google Cloud infrastructure. Where data is transferred internationally, subprocessors rely on Standard Contractual Clauses (SCCs) or equivalent adequacy safeguards.
+                  GridWiser relies on <strong>Google Firebase</strong> (Authentication and Cloud Firestore database storage) and <strong>Vercel</strong> (global web hosting and cookieless Web Analytics). Data is encrypted in transit via TLS and encrypted at rest by our cloud providers.
                 </p>
               </div>
             </div>
           </section>
 
-          {/* 3. Global Privacy Rights */}
+          {/* 3. Global Privacy Rights & Retention */}
           <section id="rights" className="scroll-mt-24 space-y-4">
             <h2 className="text-lg font-semibold text-white">
-              3. Global Privacy Rights (GDPR, CCPA/CPRA &amp; DPDP)
+              3. Privacy Rights &amp; Data Retention
             </h2>
             <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#090B10] p-5 text-zinc-400 sm:p-6">
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  3.1 Your Rights Regardless of Location
+                  3.1 Your Rights (India DPDP Act, GDPR &amp; CCPA/CPRA)
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  Whether you are protected under the EU/UK GDPR, California CCPA/CPRA, India&apos;s Digital Personal Data Protection (DPDP) Act, or other regional privacy frameworks, GridWiser extends the following rights to all users:
+                  Regardless of where you live, GridWiser extends these rights to all users:
                 </p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
-                  <li><strong className="text-zinc-200">Right to Access &amp; Portability:</strong> View all stored schedules and custom themes, or download a complete machine-readable <code className="text-zinc-300">.JSON</code> export anytime.</li>
-                  <li><strong className="text-zinc-200">Right to Rectification:</strong> Edit your timetable entries, metadata, and custom themes directly in the Studio.</li>
-                  <li><strong className="text-zinc-200">Right to Erasure (&ldquo;Right to be Forgotten&rdquo;):</strong> Delete individual timetables, wipe all schedules, or permanently delete your entire account and profile self-serve.</li>
-                  <li><strong className="text-zinc-200">Right to Non-Discrimination:</strong> We will never deny service or degrade functionality for exercising your privacy rights.</li>
+                  <li><strong className="text-zinc-200">Access &amp; Portability:</strong> View all saved schedules and custom themes, or download a complete <code className="text-zinc-300">.JSON</code> export anytime.</li>
+                  <li><strong className="text-zinc-200">Correction:</strong> Edit any timetable, exam entry, or custom theme directly in the Studio.</li>
+                  <li><strong className="text-zinc-200">Erasure:</strong> Delete individual items, wipe all schedules, or permanently delete your entire account self-serve.</li>
+                  <li><strong className="text-zinc-200">No Selling or Ad Sharing:</strong> GridWiser does not sell or share your personal information for advertising.</li>
                 </ul>
               </div>
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  3.2 Do Not Sell or Share Personal Information (CCPA/CPRA)
+                  3.2 Retention &amp; Backups After Deletion
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  GridWiser does <strong>not</strong> sell your personal information and does <strong>not</strong> share your personal information with third parties for cross-context behavioral advertising.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  3.3 Data Retention
-                </h3>
-                <p className="mt-1.5 text-xs leading-relaxed">
-                  We retain your profile, saved schedules, and custom themes only for as long as your account remains active or until you delete them. When you delete your account in <Link href="/account" className="text-blue-400 underline hover:text-blue-300">Account Settings</Link>, your user profile, private subcollections, and associated public share snapshots are purged from active Firestore storage.
+                  We keep your profile, saved schedules, and custom themes only while your account is active or until you delete them. When you delete your account in <Link href="/account" className="text-blue-400 underline hover:text-blue-300">Account Settings</Link>, your active Firestore profile, private subcollections, and public share snapshots are removed immediately. However, automated disaster-recovery backups and transient infrastructure logs at Firebase/Google Cloud and Vercel may retain encrypted copies briefly before automatically rolling off.
                 </p>
               </div>
             </div>
@@ -293,42 +302,44 @@ export default function LegalPage() {
           {/* 4. Security & Data Control */}
           <section id="security" className="scroll-mt-24 space-y-4">
             <h2 className="text-lg font-semibold text-white">
-              4. Security Architecture &amp; Self-Serve Data Control
+              4. Security Architecture &amp; Vulnerability Reporting
             </h2>
             <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#090B10] p-5 text-zinc-400 sm:p-6">
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  4.1 Server-Enforced Isolation &amp; Schema Validation
+                  4.1 Server-Enforced Isolation &amp; Self-Serve Controls
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  Your private timetables and custom templates are isolated under your authenticated UID and enforced server-side by strict Cloud Firestore Security Rules. Public share collections disallow collection-wide listing (<code className="text-zinc-300">allow list: if false</code>) and strictly reject extraneous fields or personally identifiable information. While we apply industry-standard safeguards, no internet transmission is 100% immune to risk; we recommend keeping periodic local JSON backups of critical schedules.
+                  Your private timetables, exam schedules, and custom templates are isolated under your authenticated UID and enforced server-side by Cloud Firestore Security Rules. Public share collections disallow collection-wide listing (<code className="text-zinc-300">allow list: if false</code>) and exclude PII. You can export a full JSON backup, wipe all timetables, or delete your account anytime in{' '}
+                  <Link href="/account" className="text-blue-400 underline hover:text-blue-300">
+                    Account Settings
+                  </Link>
+                  .
                 </p>
               </div>
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  4.2 Self-Serve Controls
+                  4.2 Reporting Security Issues
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  Manage your data anytime from{' '}
-                  <Link href="/account" className="text-blue-400 underline hover:text-blue-300">
-                    Account Settings
-                  </Link>
-                  :
+                  If you discover a security vulnerability, Firestore rule bypass, or privacy issue, please report it responsibly to{' '}
+                  <a
+                    href="mailto:agnelfrancis2007@hotmail.com?subject=GridWiser%20Security%20Report"
+                    className="text-blue-400 underline hover:text-blue-300"
+                  >
+                    agnelfrancis2007@hotmail.com
+                  </a>{' '}
+                  before disclosing it publicly. We aim to acknowledge security reports within 48 hours.
                 </p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
-                  <li>Export a complete JSON archive of all saved schedules.</li>
-                  <li>Delete all saved timetables and revoke all public share links in one action.</li>
-                  <li>Permanently delete your GridWiser profile and disconnect your Google account.</li>
-                </ul>
               </div>
             </div>
           </section>
 
-          {/* 5. Disclaimers, Limitation of Liability & Governing Terms */}
+          {/* 5. Disclaimers, Limitation of Liability & Governing Law */}
           <section id="liability" className="scroll-mt-24 space-y-4">
             <h2 className="text-lg font-semibold text-white">
-              5. Disclaimers, Limitation of Liability &amp; Governing Terms
+              5. Disclaimers, Limitation of Liability &amp; Governing Law
             </h2>
             <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#090B10] p-5 text-zinc-400 sm:p-6">
               <div>
@@ -336,7 +347,7 @@ export default function LegalPage() {
                   5.1 Disclaimer of Warranties
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, GRIDWISER IS PROVIDED &ldquo;AS IS&rdquo; AND &ldquo;AS AVAILABLE&rdquo; WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF DATA LOSS.
+                  To the maximum extent permitted by applicable law, GridWiser is provided <strong>&ldquo;as is&rdquo; and &ldquo;as available&rdquo;</strong> without warranties of any kind—express, implied, or statutory—including implied warranties of merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee uninterrupted availability or zero data loss, and recommend keeping periodic local JSON backups.
                 </p>
               </div>
 
@@ -345,34 +356,33 @@ export default function LegalPage() {
                   5.2 Limitation of Liability
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL GRIDWISER OR ITS OPERATOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES (INCLUDING MISSED CLASSES, MISSED EXAMS, LOST DATA, OR LOSS OF GOODWILL) ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF THE SERVICE. BECAUSE GRIDWISER IS PROVIDED FREE OF CHARGE, OUR TOTAL AGGREGATE LIABILITY FOR ANY CLAIM SHALL NOT EXCEED THE GREATER OF THE AMOUNT YOU PAID TO USE THE SERVICE IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM OR TEN U.S. DOLLARS ($10 USD), EXCEPT WHERE PROHIBITED BY MANDATORY CONSUMER LAW.
+                  To the maximum extent permitted by law, neither GridWiser nor its Operator shall be liable for any indirect, incidental, special, consequential, or punitive damages—including missed classes, missed exams, or lost data—arising from your use of the Service. Because GridWiser is provided free of charge, our total aggregate liability for any claim shall not exceed the greater of the amount you paid to use the Service in the preceding 12 months or ten U.S. dollars (US$10), except where prohibited by mandatory consumer law.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  5.3 Indemnification
+                  5.3 Governing Law &amp; Jurisdiction
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  You agree to indemnify and hold harmless GridWiser and its Operator from any third-party claims, damages, or expenses arising out of your violation of these Terms, your misuse of the Service, or any infringing or unlawful User Content you publicly share.
+                  These Terms and any disputes arising out of or relating to GridWiser are governed by the <strong>laws of India</strong>, without regard to conflict-of-law principles, and shall be subject to the exclusive jurisdiction of the courts in <strong>Thrissur, Kerala, India</strong>.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-                  5.4 Changes, Severability &amp; Contact
+                  5.4 Privacy Requests, Takedowns &amp; Contact
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed">
-                  We may update these Terms or Privacy Policy as GridWiser evolves; material changes will update the &ldquo;Last Updated&rdquo; date above. If any provision is held unenforceable, the remaining provisions remain in full force. For privacy inquiries, takedown requests, or legal notices, contact the Operator via{' '}
+                  For privacy inquiries, data deletion requests, takedown notices, or general legal questions, email{' '}
                   <a
-                    href="https://agnel.is-a.dev/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 underline hover:text-blue-300"
+                    href="mailto:agnelfrancis2007@hotmail.com"
+                    className="inline-flex items-center gap-1 text-blue-400 underline hover:text-blue-300"
                   >
-                    agnel.is-a.dev
+                    <Mail className="h-3 w-3" />
+                    agnelfrancis2007@hotmail.com
                   </a>
-                  .
+                  . We aim to respond to all privacy and takedown requests within <strong>7 business days</strong>.
                 </p>
               </div>
             </div>

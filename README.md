@@ -2,6 +2,7 @@
   <img src="./public/gridwise-oauth-logo.png" alt="GridWiser Logo" width="72" height="72" />
   <h1>GridWiser</h1>
   <p>
+    <strong>Modern Timetable UI Studio</strong> — Build conflict-free weekly schedules, preview 12 handcrafted architectural templates, import via AI, and export print-ready PNG, PDF, .ICS, and daily poster packs.
     <strong>Modern Timetable UI Studio</strong> — Build conflict-free weekly schedules, preview 13 handcrafted architectural templates, craft custom themes with AI, and export print-ready PNG, PDF, .ICS, wallpapers, and daily poster packs.
   </p>
 
@@ -31,7 +32,7 @@
 - **AI Schedule Import (`ImportAiModal`)** — Copy a structured prompt to use with ChatGPT, Claude, or Gemini on any schedule image, PDF, or text, then paste the JSON output for local client-side parsing (`import-parser.ts`) and instant theme selection.
 - **12 Structurally Distinct Design Presets (`themes.ts`)** — Each preset pairs custom typography (`Inter`, `Geist`, `Plus Jakarta Sans`, `Space Grotesk`, `DM Sans`, `Newsreader`, `Syne`, `Outfit`, `IBM Plex Mono`, `JetBrains Mono`), bespoke layouts, and light/dark palettes.
 - **Multi-Format Client-Side Exports** —
-  - **2× Retina PNG** (single weekly timetable or individual day poster)
+  - **3× Retina PNG** (single weekly timetable or individual day poster)
   - **All Days (`.ZIP`)** via `jszip` for daily poster presets
   - **Direct `.PDF` Download** via `jspdf` (including multi-page daily PDFs)
   - **`.ICS` Calendar** export for Apple Calendar, Google Calendar, and Outlook
@@ -41,6 +42,7 @@
 
 ---
 
+## 12 Preset Templates
 ## 13 Preset Templates
 
 | Preset | Category | Layout Style | Mode |

@@ -12,6 +12,7 @@ import {
   Check,
 } from 'lucide-react';
 import { GridWiseBrand } from '@/components/GridWiseLogo';
+import { ShowcaseVideoPlayer } from '@/components/ShowcaseVideoPlayer';
 import type { PresetTemplateId } from '@/types/timetable';
 import { PRESET_TEMPLATES } from '@/lib/themes';
 import {
@@ -462,6 +463,36 @@ export function WelcomeLanding({
             title="3. Adjust & Export"
             desc="Fine-tune any block directly, save to your Google-synced cloud library, share via link, or export as PNG, PDF, or .ICS."
           />
+        </div>
+      </section>
+
+      {/* Product Film Showcase Section (plays on scroll before footer) */}
+      <section className="relative border-t border-white/[0.06] bg-[#03050A] py-12">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-45"
+          style={{
+            background:
+              'radial-gradient(ellipse 65% 50% at 50% 50%, rgba(37, 99, 235, 0.18) 0%, transparent 70%)',
+          }}
+        />
+        <div className="relative z-10 mx-auto max-w-3xl px-6">
+          <div className="mb-6 text-center">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-blue-400">
+              See GridWiser in Action
+            </p>
+            <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+              From raw schedule to print-ready timetable in seconds
+            </h2>
+            <p className="mx-auto mt-1.5 max-w-lg text-xs text-zinc-400">
+              Watch how subjects, AI imports, custom themes, and instant exports come together inside GridWiser.
+            </p>
+          </div>
+          <div className="mx-auto max-w-[700px]">
+            <ShowcaseVideoPlayer
+              src="/videos/gridwiser.mp4"
+              autoPlayOnView
+            />
+          </div>
         </div>
       </section>
 
