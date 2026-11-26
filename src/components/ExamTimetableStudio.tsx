@@ -36,6 +36,8 @@ import {
 } from '@/lib/wallpaper-export';
 import { ExamAiModal } from '@/components/ExamAiModal';
 import { ExamTimetableRenderer } from '@/components/ExamTimetableRenderer';
+import { GridDatePicker } from '@/components/GridDatePicker';
+import { GridTimePicker } from '@/components/GridTimePicker';
 import type {
   ExamEntry,
   ExamTimetableMeta,
@@ -937,24 +939,21 @@ export function ExamTimetableStudio({
               </select>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              <input
-                type="date"
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <GridDatePicker
                 value={formDate}
-                onChange={(e) => setFormDate(e.target.value)}
-                className="col-span-1 rounded-lg border border-[#25252E] bg-[#0A0A0D] px-2 py-1.5 text-[11px] text-white focus:border-blue-500 focus:outline-none"
+                onChange={setFormDate}
+                placeholder="Exam date"
               />
-              <input
-                type="time"
+              <GridTimePicker
                 value={formStart}
-                onChange={(e) => setFormStart(e.target.value)}
-                className="rounded-lg border border-[#25252E] bg-[#0A0A0D] px-2 py-1.5 text-[11px] text-white focus:border-blue-500 focus:outline-none"
+                onChange={setFormStart}
+                timeFormat={meta.timeFormat}
               />
-              <input
-                type="time"
+              <GridTimePicker
                 value={formEnd}
-                onChange={(e) => setFormEnd(e.target.value)}
-                className="rounded-lg border border-[#25252E] bg-[#0A0A0D] px-2 py-1.5 text-[11px] text-white focus:border-blue-500 focus:outline-none"
+                onChange={setFormEnd}
+                timeFormat={meta.timeFormat}
               />
             </div>
 

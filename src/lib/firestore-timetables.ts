@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
 import { db } from '@/lib/firebase';
+import { generateRandomAdultDob } from '@/lib/dob-policy';
 import { getPresetTemplate } from '@/lib/themes';
 import type {
   CustomTemplateDefinition,
@@ -39,19 +40,62 @@ function toIsoString(value: unknown): string {
   return new Date().toISOString();
 }
 
-export async function upsertUserProfile(user: User): Promise<void> {
+export async function upsertUserProfile(
+  user: User,
+  dobInfo?: { dob: string; guardianConsent?: boolean }
+): Promise<{ needsDob: boolean }> {
   const ref = doc(db, 'users', user.uid);
-  await setDoc(
-    ref,
-    {
-      uid: user.uid,
-      displayName: (user.displayName ?? '').slice(0, 120),
-      email: (user.email ?? '').slice(0, 200),
-      photoURL: (user.photoURL ?? '').slice(0, 500),
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
+  const existingSnap = await getDoc(ref).catch(() => null);
+  const existingData = existingSnap?.exists() ? existingSnap.data() : null;
+  const existingDob =
+    typeof existingData?.dob === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(existingData.dob)
+      ? existingData.dob
+      : null;
+
+  const createdMs = user.metadata?.creationTime ? Date.parse(user.metadata.creationTime) : 0;
+  // Only accounts created before the DOB rollout are treated as legacy accounts
+  const DOB_ROLLOUT_EPOCH_MS = Date.parse('2026-11-26T09:50:00Z');
+  const isLegacyAccount = createdMs > 0 && createdMs < DOB_ROLLOUT_EPOCH_MS;
+
+  let resolvedDob: string | null = existingDob ?? dobInfo?.dob ?? null;
+  let resolvedGuardianConsent = existingDob
+    ? Boolean(existingData?.guardianConsent)
+    : Boolean(dobInfo?.guardianConsent);
+
+  // Backfill a random adult DOB for already-created accounts
+  if (!resolvedDob && isLegacyAccount) {
+    resolvedDob = generateRandomAdultDob();
+    resolvedGuardianConsent = false;
+  }
+
+  const payload: Record<string, unknown> = {
+    uid: user.uid,
+    displayName: (user.displayName ?? '').slice(0, 120),
+    email: (user.email ?? '').slice(0, 200),
+    photoURL: (user.photoURL ?? '').slice(0, 500),
+    updatedAt: serverTimestamp(),
+  };
+
+  if (resolvedDob) {
+    payload.dob = resolvedDob;
+    payload.guardianConsent = resolvedGuardianConsent;
+  }
+
+  await setDoc(ref, payload, { merge: true });
+  return { needsDob: !resolvedDob };
+}
+
+export async function saveUserDob(
+  uid: string,
+  dob: string,
+  guardianConsent: boolean
+): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  await updateDoc(ref, {
+    dob,
+    guardianConsent,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 export interface FirestoreTimetableRecord extends SavedTimetableRecord {

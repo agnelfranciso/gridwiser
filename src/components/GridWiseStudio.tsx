@@ -37,6 +37,7 @@ import {
   Loader2,
   Pencil,
   GraduationCap,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   ALL_DAYS,
@@ -59,9 +60,11 @@ import {
   publishSharedCustomTemplate,
   publishSharedTimetable,
   saveUserTimetable,
+  saveUserDob,
   unpublishSharedTimetable,
   upsertUserProfile,
 } from '@/lib/firestore-timetables';
+import { validateSignupDob } from '@/lib/dob-policy';
 import { getPresetTemplate, PRESET_TEMPLATES } from '@/lib/themes';
 import {
   exportTimetableWallpaper,
@@ -75,6 +78,8 @@ import {
 import { SubjectEntryBuilder } from '@/components/SubjectEntryBuilder';
 import { TimetableRenderer } from '@/components/TimetableRenderer';
 import { ExamTimetableStudio } from '@/components/ExamTimetableStudio';
+import { DobConsentSection } from '@/components/DobConsentSection';
+import { GridTimePicker } from '@/components/GridTimePicker';
 import { OnboardingWizard } from '@/components/OnboardingWizard';
 import { WelcomeLanding } from '@/components/WelcomeLanding';
 import { ImportAiModal } from '@/components/ImportAiModal';
@@ -140,6 +145,11 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
   const [sharedTemplateModalUrl, setSharedTemplateModalUrl] = useState<string | null>(null);
   const [copiedTemplateShareUrl, setCopiedTemplateShareUrl] = useState(false);
   const [pendingLeaveHref, setPendingLeaveHref] = useState<string | null>(null);
+  const [dobGateOpen, setDobGateOpen] = useState(false);
+  const [dobInput, setDobInput] = useState('');
+  const [dobGuardianConsent, setDobGuardianConsent] = useState(false);
+  const [dobError, setDobError] = useState<string | null>(null);
+  const [dobSaving, setDobSaving] = useState(false);
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string>(() =>
     JSON.stringify({
       meta: initialRecord?.meta ?? {
@@ -478,7 +488,13 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
         ) {
           setMobileNoticeOpen(true);
         }
-        upsertUserProfile(firebaseUser).catch(() => { });
+        upsertUserProfile(firebaseUser)
+          .then((res) => {
+            if (res.needsDob) {
+              setDobGateOpen(true);
+            }
+          })
+          .catch(() => { });
         const params = new URLSearchParams(window.location.search);
         const loadParam = params.get('load');
 
@@ -1266,7 +1282,9 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={TRANSITION_VIEW}
-            className="flex min-h-screen bg-[#0A0A0C] text-zinc-100 lg:h-screen lg:overflow-hidden"
+            className={`flex min-h-screen bg-[#0A0A0C] text-zinc-100 lg:h-screen lg:overflow-hidden ${
+              dobGateOpen ? 'pointer-events-none select-none blur-[3px]' : ''
+            }`}
           >
             {/* Left Sidebar — fixed to viewport height so New Setup & Sign Out stay pinned */}
             <aside className="no-print hidden w-[248px] shrink-0 flex-col justify-between overflow-y-auto border-r border-[#1C1C22] bg-[#0D0D0F] p-3.5 lg:flex lg:h-screen">
@@ -2392,20 +2410,18 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                       </div>
                       <div>
                         <label className="mb-1 block text-[11px] text-zinc-400">Start</label>
-                        <input
-                          type="time"
+                        <GridTimePicker
                           value={editStart}
-                          onChange={(e) => setEditStart(e.target.value)}
-                          className="w-full rounded-lg border border-[#25252D] bg-[#0B0B0D] px-2 py-2 font-mono text-xs text-white outline-none"
+                          onChange={setEditStart}
+                          timeFormat={meta.timeFormat}
                         />
                       </div>
                       <div>
                         <label className="mb-1 block text-[11px] text-zinc-400">End</label>
-                        <input
-                          type="time"
+                        <GridTimePicker
                           value={editEnd}
-                          onChange={(e) => setEditEnd(e.target.value)}
-                          className="w-full rounded-lg border border-[#25252D] bg-[#0B0B0D] px-2 py-2 font-mono text-xs text-white outline-none"
+                          onChange={setEditEnd}
+                          timeFormat={meta.timeFormat}
                         />
                       </div>
                     </div>
@@ -2534,6 +2550,83 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
           ))}
         </div>
       )}
+
+      {/* Undismissable Age / DOB Verification Gate for Newly Registered Accounts */}
+      <AnimatedModalShell
+        open={dobGateOpen && Boolean(user)}
+        onClose={() => {}}
+        zIndexClass="z-50"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-md rounded-2xl border border-white/15 bg-[#080B12] p-6 shadow-2xl"
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-400">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-white">
+                Enter Your Date of Birth
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                Before entering your dashboard, please verify your age in accordance with India&apos;s DPDP Act, 2023.
+              </p>
+            </div>
+          </div>
+
+          <DobConsentSection
+            dob={dobInput}
+            onChangeDob={(v) => {
+              setDobInput(v);
+              setDobError(null);
+            }}
+            guardianConsent={dobGuardianConsent}
+            onChangeGuardianConsent={(v) => {
+              setDobGuardianConsent(v);
+              setDobError(null);
+            }}
+          />
+
+          {dobError && (
+            <p className="mt-3 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+              {dobError}
+            </p>
+          )}
+
+          <button
+            type="button"
+            disabled={dobSaving}
+            onClick={async () => {
+              if (!user) return;
+              const check = validateSignupDob(dobInput, dobGuardianConsent);
+              if (!check.ok) {
+                setDobError(check.reason);
+                return;
+              }
+              setDobSaving(true);
+              try {
+                await saveUserDob(
+                  user.uid,
+                  dobInput,
+                  check.isMinor ? dobGuardianConsent : false
+                );
+                setDobGateOpen(false);
+                showToast('Age verified! Welcome to GridWiser.');
+              } catch (err) {
+                setDobError(
+                  err instanceof Error ? err.message : 'Could not save date of birth.'
+                );
+              } finally {
+                setDobSaving(false);
+              }
+            }}
+            className="mt-5 flex w-full items-center justify-center rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-[#09090B] transition hover:bg-zinc-200 disabled:opacity-60"
+          >
+            {dobSaving ? 'Saving...' : 'Continue to Dashboard'}
+          </button>
+        </div>
+      </AnimatedModalShell>
 
       {/* Unsaved Changes Warning Modal */}
       <AnimatedModalShell

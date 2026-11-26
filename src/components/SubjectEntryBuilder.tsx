@@ -13,6 +13,7 @@ import {
 import { SUBJECT_DOT_TONES } from '@/lib/themes';
 import { analyzeSchedule, markOccurrencesAsMerged } from '@/lib/schedule-engine';
 import { OverlapAlertModal } from '@/components/OverlapAlertModal';
+import { GridTimePicker } from '@/components/GridTimePicker';
 import { SPRING_PILL, TRANSITION_FAST } from '@/components/MotionPrimitives';
 
 let localSeq = 1;
@@ -347,20 +348,16 @@ export function SubjectEntryBuilder({
                   </select>
                 </div>
 
-                <input
-                  type="time"
+                <GridTimePicker
                   value={occ.startTime}
-                  onChange={(e) => updateOccurrence(idx, { startTime: e.target.value })}
-                  aria-label={`Occurrence ${idx + 1} start time`}
-                  className="w-full rounded-md border border-[#25252C] bg-[#141418] px-2 py-1.5 font-mono text-xs text-zinc-100 outline-none"
+                  onChange={(val) => updateOccurrence(idx, { startTime: val })}
+                  timeFormat={timeFormat}
                 />
 
-                <input
-                  type="time"
+                <GridTimePicker
                   value={occ.endTime}
-                  onChange={(e) => updateOccurrence(idx, { endTime: e.target.value })}
-                  aria-label={`Occurrence ${idx + 1} end time`}
-                  className="w-full rounded-md border border-[#25252C] bg-[#141418] px-2 py-1.5 font-mono text-xs text-zinc-100 outline-none"
+                  onChange={(val) => updateOccurrence(idx, { endTime: val })}
+                  timeFormat={timeFormat}
                 />
               </motion.div>
             ))}

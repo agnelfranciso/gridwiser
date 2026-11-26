@@ -309,15 +309,18 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUserProfile(data, userId) {
-      let allowedFields = ['uid', 'displayName', 'email', 'photoURL', 'updatedAt'];
+      let requiredFields = ['uid', 'displayName', 'email', 'photoURL', 'updatedAt'];
+      let allowedFields = ['uid', 'displayName', 'email', 'photoURL', 'dob', 'guardianConsent', 'updatedAt'];
       return hasOnlyAllowedFields(allowedFields) &&
-        hasRequiredFields(allowedFields) &&
+        hasRequiredFields(requiredFields) &&
         data.uid is string &&
         data.uid == userId &&
         data.displayName is string &&
         data.displayName.size() <= 120 &&
         isValidEmail(data.email) &&
         isValidPhotoUrl(data.photoURL) &&
+        (!('dob' in data) || (data.dob is string && data.dob.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))) &&
+        (!('guardianConsent' in data) || data.guardianConsent is bool) &&
         data.updatedAt is timestamp;
     }
 

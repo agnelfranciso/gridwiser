@@ -77,6 +77,13 @@ export function GoogleOneTap({
       return;
     }
 
+    const isLocalhost =
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      return;
+    }
+
     let cancelled = false;
     let promptTimer: ReturnType<typeof setTimeout> | null = null;
 
