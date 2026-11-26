@@ -93,6 +93,7 @@ import {
 
 type ViewMode = 'welcome' | 'onboarding' | 'studio' | 'login-gate';
 type StudioNav = 'subjects' | 'templates' | 'timetable' | 'exams' | 'saved';
+const VALID_STUDIO_TABS: StudioNav[] = ['subjects', 'templates', 'timetable', 'exams', 'saved'];
 
 interface GridWiseStudioProps {
   initialRecord?: SavedTimetableRecord | null;
@@ -219,6 +220,44 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    const onPopState = (e: PopStateEvent) => {
+      const state = e.state as {
+        viewMode?: ViewMode;
+        activeNav?: StudioNav;
+        onboardingStep?: 1 | 2;
+      } | null;
+
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as StudioNav | null;
+      const stepParam = params.get('step');
+
+      if (state?.viewMode === 'studio' || (tabParam && VALID_STUDIO_TABS.includes(tabParam))) {
+        const nextTab =
+          (tabParam && VALID_STUDIO_TABS.includes(tabParam) ? tabParam : state?.activeNav) ??
+          'timetable';
+        setViewMode('studio');
+        setActiveNav(nextTab);
+        return;
+      }
+
+      if (state?.viewMode === 'onboarding' || stepParam === '1' || stepParam === '2') {
+        setViewMode('onboarding');
+        setOnboardingStep(
+          stepParam === '2' || state?.onboardingStep === 2 ? 2 : 1
+        );
+        return;
+      }
+
+      if (!auth.currentUser) {
+        setViewMode('welcome');
+      }
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   const navigateSafely = useCallback(
     (href: string) => {
@@ -470,12 +509,21 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
           return;
         }
 
+        const urlTab = new URLSearchParams(window.location.search).get('tab') as StudioNav | null;
+        const resolvedTab: StudioNav =
+          urlTab && VALID_STUDIO_TABS.includes(urlTab) ? urlTab : 'timetable';
+
         setViewMode('studio');
         fetchCustomTemplates(firebaseUser.uid).catch(() => { });
         const items = await fetchSavedList(firebaseUser.uid);
 
         if (hasDraftSubjectsRef.current) {
-          setActiveNav('timetable');
+          setActiveNav(resolvedTab);
+          window.history.replaceState(
+            { viewMode: 'studio', activeNav: resolvedTab },
+            '',
+            `/?tab=${resolvedTab}`
+          );
         } else if (!loadParam && !initialRecord && items.length > 0) {
           // Load most recent saved timetable when user has no active draft
           getUserTimetable(firebaseUser.uid, items[0].id)
@@ -493,10 +541,22 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                     templateId: rec.templateId,
                   })
                 );
-                setActiveNav('timetable');
+                setActiveNav(resolvedTab);
+                window.history.replaceState(
+                  { viewMode: 'studio', activeNav: resolvedTab },
+                  '',
+                  `/?tab=${resolvedTab}`
+                );
               }
             })
             .catch(() => { });
+        } else {
+          setActiveNav(resolvedTab);
+          window.history.replaceState(
+            { viewMode: 'studio', activeNav: resolvedTab },
+            '',
+            `/?tab=${resolvedTab}`
+          );
         }
       } else if (!initialRecord) {
         setSavedList([]);
@@ -568,6 +628,13 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
 
   const handleNavClick = (nav: StudioNav) => {
     setActiveNav(nav);
+    if (typeof window !== 'undefined' && window.location.search !== `?tab=${nav}`) {
+      window.history.pushState(
+        { viewMode: 'studio', activeNav: nav },
+        '',
+        `/?tab=${nav}`
+      );
+    }
     if (nav === 'saved' && user) {
       fetchSavedList(user.uid);
     } else if ((nav === 'templates' || nav === 'timetable') && user) {
@@ -1251,19 +1318,6 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                     badge={savedList.length > 0 ? String(savedList.length) : undefined}
                     onClick={() => handleNavClick('saved')}
                   />
-                  <button
-                    type="button"
-                    onClick={() => navigateSafely('/theme-creator')}
-                    className="flex w-full items-center justify-between overflow-hidden rounded-lg px-2.5 py-2 text-xs font-medium text-zinc-400 transition hover:bg-[#18181E] hover:text-white"
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Palette className="h-4 w-4 text-blue-400" />
-                      <span>Theme Creator</span>
-                    </span>
-                    <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-blue-400">
-                      NEW
-                    </span>
-                  </button>
                 </nav>
 
                 <div className="space-y-2 px-1">
@@ -1700,7 +1754,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                             className="hidden items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3.5 py-2 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20 lg:inline-flex"
                           >
                             <Palette className="h-3.5 w-3.5" />
-                            Create Your Template
+                            Create Custom Theme
                           </button>
                           <button
                             type="button"
@@ -1783,13 +1837,18 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
                                       className="mt-2.5 flex items-center gap-1.5"
                                       onClick={(e) => e.stopPropagation()}
                                     >
-                                      <Link
-                                        href={`/theme-creator?edit=${encodeURIComponent(customDef.id)}`}
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          navigateSafely(
+                                            `/theme-creator?edit=${encodeURIComponent(customDef.id)}`
+                                          )
+                                        }
                                         className="hidden items-center gap-1 rounded-md border border-[#2C2C38] bg-[#1A1A22] px-2 py-1 text-[10px] font-medium text-zinc-200 transition hover:border-zinc-500 hover:text-white lg:inline-flex"
                                       >
                                         <Pencil className="h-2.5 w-2.5" />
                                         Edit
-                                      </Link>
+                                      </button>
                                       <button
                                         type="button"
                                         disabled={sharingTemplateId === customDef.id}
