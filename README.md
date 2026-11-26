@@ -2,11 +2,12 @@
   <img src="./public/gridwise-oauth-logo.png" alt="GridWiser Logo" width="72" height="72" />
   <h1>GridWiser</h1>
   <p>
-    <strong>Modern Timetable UI Studio</strong> — Build conflict-free weekly schedules, preview 12 handcrafted architectural templates, import via AI, and export print-ready PNG, PDF, .ICS, and daily poster packs.
+    <strong>Modern Timetable UI Studio</strong> — Build conflict-free weekly schedules, preview 13 handcrafted architectural templates, craft custom themes with AI, and export print-ready PNG, PDF, .ICS, wallpapers, and daily poster packs.
   </p>
 
   <p>
     <a href="https://gridwiser.vercel.app"><strong>Live Website</strong></a> ·
+    <a href="https://gridwiser.vercel.app/about"><strong>About</strong></a> ·
     <a href="https://github.com/agnelfranciso/gridwiser"><strong>Repository</strong></a> ·
     <a href="https://gridwiser.vercel.app/legal"><strong>Terms & Privacy</strong></a>
   </p>
@@ -40,7 +41,7 @@
 
 ---
 
-## 12 Preset Templates
+## 13 Preset Templates
 
 | Preset | Category | Layout Style | Mode |
 | :--- | :--- | :--- | :--- |
@@ -56,6 +57,93 @@
 | **Acid Daily** | Per-Day Poster | Concrete Grey & Acid-Lime Daily Carousel | Dark |
 | **Ivory Daily Deck** | Per-Day Poster | Warm Paper Daily Schedule Cards | Light |
 | **Exhibition Blue** | Per-Day Poster | Cornflower Blue Exhibition Hairline Poster | Light |
+| **Crimson Pulse** | Dark Telemetry | Crimson Wave Banner + Weekly Load Bar | Dark |
+
+---
+
+## Template Gallery
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Cron Studio</strong><br />
+      <sub>Calendar + Analytics · Dark</sub><br /><br />
+      <img src="./public/templates/cron-studio.png" alt="Cron Studio" width="100%" />
+    </td>
+    <td align="center" width="50%">
+      <strong>Swiss Timeline</strong><br />
+      <sub>Horizontal Axis · Dark</sub><br /><br />
+      <img src="./public/templates/swiss-horizontal.png" alt="Swiss Timeline" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Sapphire Bento</strong><br />
+      <sub>Modular Bento · Dark</sub><br /><br />
+      <img src="./public/templates/bento-workspace.png" alt="Sapphire Bento" width="100%" />
+    </td>
+    <td align="center" width="50%">
+      <strong>Editorial Journal</strong><br />
+      <sub>Print &amp; Serif · Dark</sub><br /><br />
+      <img src="./public/templates/editorial-journal.png" alt="Editorial Journal" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Linear Boards</strong><br />
+      <sub>Kanban Stack · Dark</sub><br /><br />
+      <img src="./public/templates/linear-columns.png" alt="Linear Boards" width="100%" />
+    </td>
+    <td align="center" width="50%">
+      <strong>Terminal Index</strong><br />
+      <sub>Data Table · Dark</sub><br /><br />
+      <img src="./public/templates/terminal-console.png" alt="Terminal Index" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Gallery Paper</strong><br />
+      <sub>Daylight Editorial · Light</sub><br /><br />
+      <img src="./public/templates/gallery-paper.png" alt="Gallery Paper" width="100%" />
+    </td>
+    <td align="center" width="50%">
+      <strong>Violet Poster</strong><br />
+      <sub>Showcase Cards · Dark</sub><br /><br />
+      <img src="./public/templates/poster-tiles.png" alt="Violet Poster" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Precision Run</strong><br />
+      <sub>Editorial Columns · Dark</sub><br /><br />
+      <img src="./public/templates/precision-athletic.png" alt="Precision Run" width="100%" />
+    </td>
+    <td align="center" width="50%">
+      <strong>Crimson Pulse</strong><br />
+      <sub>Dark Telemetry · Dark</sub><br /><br />
+      <img src="./public/templates/crimson-pulse.png" alt="Crimson Pulse" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Acid Daily</strong><br />
+      <sub>Per-Day Poster · Dark</sub><br /><br />
+      <img src="./public/templates/acid-daily-poster.png" alt="Acid Daily" width="100%" />
+    </td>
+    <td align="center" width="50%">
+      <strong>Ivory Daily Deck</strong><br />
+      <sub>Per-Day Poster · Light</sub><br /><br />
+      <img src="./public/templates/editorial-daily-deck.png" alt="Ivory Daily Deck" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%" colspan="2">
+      <strong>Exhibition Blue</strong><br />
+      <sub>Per-Day Poster · Light</sub><br /><br />
+      <img src="./public/templates/exhibition-blue-daily.png" alt="Exhibition Blue" width="52%" />
+    </td>
+  </tr>
+</table>
 
 ---
 
