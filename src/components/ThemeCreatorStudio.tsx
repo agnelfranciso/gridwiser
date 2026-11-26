@@ -275,6 +275,7 @@ export function ThemeCreatorStudio() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [stageBackdrop, setStageBackdrop] = useState<'dark' | 'light'>('dark');
   const [toast, setToast] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   const showToast = (text: string, type: 'ok' | 'err' = 'ok') => {
@@ -518,14 +519,26 @@ export function ThemeCreatorStudio() {
               <span className="hidden sm:inline">Studio</span>
             </Link>
             <div className="h-4 w-px bg-zinc-800" />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Palette className="h-4 w-4 text-blue-400" />
               <span className="text-xs font-semibold tracking-tight text-white sm:text-sm">
                 Theme Creator
               </span>
-              <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-                Beta
-              </span>
+              <span className="text-zinc-700">/</span>
+              <div className="flex items-center gap-1.5 rounded-full border border-[#24242E] bg-[#14141A] px-2.5 py-0.5">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: template.tokens.accent }}
+                />
+                <span className="max-w-[180px] truncate text-[11px] font-medium text-zinc-200">
+                  {template.name || 'Untitled Theme'}
+                </span>
+              </div>
+              {shareId && (
+                <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+                  Synced
+                </span>
+              )}
             </div>
           </div>
 
@@ -562,31 +575,44 @@ export function ThemeCreatorStudio() {
         {/* Main Split Layout: Editor Sidebar on Left, Live Canvas on Right */}
         <div className="flex flex-1 flex-col lg:flex-row">
           {/* Left Control Panel */}
-          <aside className="w-full shrink-0 border-b border-[#1E1E24] bg-[#0C0C10] lg:w-96 lg:border-b-0 lg:border-r">
-            {/* Subnav Tabs */}
-            <div className="flex border-b border-[#1E1E24] px-2 pt-2">
-              {[
-                { id: 'colors', label: 'Colors', icon: <Palette className="h-3.5 w-3.5" /> },
-                { id: 'layout', label: 'Layout & Frame', icon: <Layout className="h-3.5 w-3.5" /> },
-                { id: 'typography', label: 'Fonts', icon: <Type className="h-3.5 w-3.5" /> },
-                { id: 'saved', label: `Saved (${savedTemplates.length})`, icon: <FolderOpen className="h-3.5 w-3.5" /> },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2.5 text-xs font-medium transition ${activeTab === tab.id
-                    ? 'border-blue-500 text-white'
-                    : 'border-transparent text-zinc-400 hover:text-zinc-200'
-                    }`}
-                >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                </button>
-              ))}
+          <aside className="flex w-full shrink-0 flex-col border-b border-[#1E1E24] bg-[#0C0C10] lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-[396px] lg:border-b-0 lg:border-r">
+            {/* Segmented Subnav Tabs */}
+            <div className="border-b border-[#1E1E24] px-3 py-2.5">
+              <div className="grid grid-cols-4 gap-1 rounded-xl border border-[#1E1E26] bg-[#08080B] p-1">
+                {[
+                  { id: 'colors', label: 'Colors', icon: <Palette className="h-3.5 w-3.5 shrink-0" /> },
+                  { id: 'layout', label: 'Layout', icon: <Layout className="h-3.5 w-3.5 shrink-0" /> },
+                  { id: 'typography', label: 'Fonts', icon: <Type className="h-3.5 w-3.5 shrink-0" /> },
+                  { id: 'saved', label: `Saved (${savedTemplates.length})`, icon: <FolderOpen className="h-3.5 w-3.5 shrink-0" /> },
+                ].map((tab) => {
+                  const active = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                      className={`relative flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                        active ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="theme-creator-tab-pill"
+                          transition={SPRING_PILL}
+                          className="absolute inset-0 rounded-lg border border-[#2C2C38] bg-[#181820] shadow-sm"
+                        />
+                      )}
+                      <span className="relative z-10 flex items-center gap-1.5">
+                        {tab.icon}
+                        <span>{tab.label}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="max-h-[calc(100vh-7rem)] overflow-y-auto p-4 space-y-5">
+            <div className="flex-1 space-y-5 overflow-y-auto p-4">
               {/* Template Identity */}
               <div className="rounded-xl border border-[#202026] bg-[#121216] p-3 space-y-3">
                 <div className="flex items-center justify-between">
@@ -1111,26 +1137,100 @@ export function ThemeCreatorStudio() {
           </aside>
 
           {/* Right Live Canvas Preview */}
-          <main className="flex-1 overflow-x-auto p-4 lg:p-8">
-            <div className="mx-auto max-w-[1240px] space-y-3">
-              <div className="flex items-center justify-between text-xs text-zinc-500">
+          <main
+            className={`flex-1 overflow-x-auto p-5 transition-colors duration-300 lg:p-8 ${
+              stageBackdrop === 'light'
+                ? 'bg-[#EAECEF]'
+                : 'bg-[#070709]'
+            }`}
+            style={
+              stageBackdrop === 'dark'
+                ? {
+                    backgroundImage:
+                      'radial-gradient(ellipse 70% 45% at 50% 0%, rgba(59, 130, 246, 0.08), transparent 70%)',
+                  }
+                : undefined
+            }
+          >
+            <div className="mx-auto max-w-[1240px] space-y-4">
+              <div
+                className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3.5 py-2 backdrop-blur-md ${
+                  stageBackdrop === 'light'
+                    ? 'border-zinc-300/80 bg-white/80 text-zinc-600'
+                    : 'border-[#1E1E26] bg-[#0D0D12]/80 text-zinc-400'
+                }`}
+              >
                 <span className="flex items-center gap-2 font-mono text-[11px]">
-                  <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                  Live Architecture Preview · Real-time Rendering
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                  Live Architecture Preview
                 </span>
-                <span className="font-mono text-[11px] text-zinc-500">
-                  {template.layout} · {template.mode} mode
-                </span>
+
+                <div className="flex items-center gap-2">
+                  <div className="hidden items-center gap-1.5 font-mono text-[10px] sm:flex">
+                    <span className="rounded-md border border-current/15 px-2 py-0.5">
+                      {template.layout}
+                    </span>
+                    <span className="rounded-md border border-current/15 px-2 py-0.5">
+                      {template.mode}
+                    </span>
+                    <span className="rounded-md border border-current/15 px-2 py-0.5">
+                      {template.radiusPx}px
+                    </span>
+                  </div>
+
+                  <div
+                    className={`flex items-center rounded-lg border p-0.5 text-[10px] font-medium ${
+                      stageBackdrop === 'light'
+                        ? 'border-zinc-300 bg-zinc-100'
+                        : 'border-[#252530] bg-[#121218]'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setStageBackdrop('dark')}
+                      className={`rounded-md px-2 py-0.5 transition ${
+                        stageBackdrop === 'dark'
+                          ? 'bg-zinc-800 text-white shadow-xs'
+                          : 'text-zinc-500 hover:text-zinc-800'
+                      }`}
+                    >
+                      Dark Stage
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStageBackdrop('light')}
+                      className={`rounded-md px-2 py-0.5 transition ${
+                        stageBackdrop === 'light'
+                          ? 'bg-white text-zinc-900 shadow-xs'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      Light Stage
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Timetable Live Canvas */}
-              <div className="overflow-hidden rounded-2xl border border-[#22222B] shadow-2xl">
-                <TimetableRenderer
-                  meta={SAMPLE_META}
-                  schedule={SAMPLE_SCHEDULE}
-                  template={activePresetPreview}
-                />
-              </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${template.layout}-${template.mode}`}
+                  initial={{ opacity: 0.65, y: 6, scale: 0.995 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0.65, y: -4, scale: 0.995 }}
+                  transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden rounded-2xl border border-[#22222B] shadow-2xl"
+                >
+                  <TimetableRenderer
+                    meta={SAMPLE_META}
+                    schedule={SAMPLE_SCHEDULE}
+                    template={activePresetPreview}
+                  />
+                </motion.div>
+              </AnimatePresence>
             </div>
           </main>
         </div>

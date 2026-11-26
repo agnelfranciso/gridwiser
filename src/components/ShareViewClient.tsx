@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { toPng } from 'html-to-image';
+import { safeToPng } from '@/lib/export-image';
 import {
   Download,
   CalendarPlus,
@@ -73,7 +73,7 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
 
   const handleExportPng = async () => {
     if (!canvasRef.current) return;
-    const dataUrl = await toPng(canvasRef.current, {
+    const dataUrl = await safeToPng(canvasRef.current, {
       pixelRatio: 3,
       backgroundColor: template.tokens.canvasBg,
     });
@@ -94,7 +94,7 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
         const day = schedule.days[i];
         const node = dailyExportRefs.current[day];
         if (!node) continue;
-        const dataUrl = await toPng(node, {
+        const dataUrl = await safeToPng(node, {
           pixelRatio: 3,
           backgroundColor: template.tokens.canvasBg,
         });
@@ -145,7 +145,7 @@ export function ShareViewClient({ timetable }: { timetable: SavedTimetableRecord
       let pdf: InstanceType<typeof jsPDF> | null = null;
 
       for (const node of nodes) {
-        const dataUrl = await toPng(node, { pixelRatio: 3, backgroundColor: bgHex });
+        const dataUrl = await safeToPng(node, { pixelRatio: 3, backgroundColor: bgHex });
         const img = await loadImage(dataUrl);
         const w = Math.round(img.naturalWidth / 3);
         const h = Math.round(img.naturalHeight / 3);

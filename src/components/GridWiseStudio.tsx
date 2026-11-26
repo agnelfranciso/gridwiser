@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { AnimatePresence, motion } from 'motion/react';
-import { toPng } from 'html-to-image';
+import { safeToPng } from '@/lib/export-image';
 import {
   LayoutGrid,
   Calendar,
@@ -749,7 +749,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
     setExportingPng(true);
     setExportProgressText('Rendering high-res 3× PNG...');
     try {
-      const dataUrl = await toPng(canvasRef.current, {
+      const dataUrl = await safeToPng(canvasRef.current, {
         pixelRatio: 3,
         backgroundColor: activeTemplate.tokens.canvasBg,
       });
@@ -786,7 +786,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
         setExportProgressText(`Rendering ${day} (${i + 1}/${schedule.days.length})...`);
         const node = dailyExportRefs.current[day];
         if (!node) continue;
-        const dataUrl = await toPng(node, {
+        const dataUrl = await safeToPng(node, {
           pixelRatio: 3,
           backgroundColor: activeTemplate.tokens.canvasBg,
         });
@@ -866,7 +866,7 @@ export function GridWiseStudio({ initialRecord }: GridWiseStudioProps) {
 
       for (let i = 0; i < nodes.length; i += 1) {
         setExportProgressText(`Rendering page ${i + 1} of ${nodes.length}...`);
-        const dataUrl = await toPng(nodes[i], {
+        const dataUrl = await safeToPng(nodes[i], {
           pixelRatio: 3,
           backgroundColor: bgHex,
         });

@@ -1,4 +1,4 @@
-import { toPng } from 'html-to-image';
+import { safeToPng } from '@/lib/export-image';
 import type { PresetTemplate } from '@/types/timetable';
 
 export type WallpaperFormat = 'lockscreen' | 'desktop';
@@ -63,7 +63,7 @@ export async function exportTimetableWallpaper(options: {
   const targetW = format === 'lockscreen' ? 1080 : 1920;
   const targetH = format === 'lockscreen' ? 1920 : 1080;
 
-  const dataUrl = await toPng(node, {
+  const dataUrl = await safeToPng(node, {
     pixelRatio: 3,
     backgroundColor: template.tokens.canvasBg,
   });
